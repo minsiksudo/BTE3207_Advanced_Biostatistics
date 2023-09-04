@@ -1,0 +1,352 @@
+---
+title: "COD_week2_1_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-09-04"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 2-1"
+author: "Minsik Kim"
+date: "2032.09.04"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230904"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+# Basic visualization of data
+
+We are going to visualize this example dataset, SBP (systolic blood pressure) data from
+
+https://nhiss.nhis.or.kr/bd/ab/bdabf003cv.do.
+
+```{r}
+
+dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv") 
+
+```
+
+## Summary statistics of data
+
+We can use `mean()`, `sd()`, `median()` functions to calculate summary statistics.
+
+```{r}
+cat("#Mean of SBP of 1M subject\n",
+      mean(dataset_sbp$SBP),
+      "\n\n#Standard deviation of SBP of 1M subject\n",
+      sd(dataset_sbp$SBP),
+      "\n\n#Median of SBP of 1M subject\n",
+      median(dataset_sbp$SBP)
+      )
+```
+
+`cat()` function prints out the character. `\n` changes the line of the console.
+
+Alternatively, `print()` can be used but the output of `print()` function is recognized as data in R. `cat()` just adds lines in the console.
+
+
+## summary()
+
+Instead, R has a convenient function called `summary()`.
+
+```{r}
+
+summary(dataset_sbp$SBP)
+
+```
+
+Voila! Now we can roughly see how the data looks like. However, it will be more straight forward if we can see the data in a form of figure.
+
+## hist()
+
+`hist()` function creates histogram in R. It as multiple arguments to make more informative histogram as output. For example,
+
+```{r}
+
+hist(dataset_sbp$SBP)
+
+```
+
+## hist() - breaks
+
+`hist()` as argument called `breaks = `, which can manually set the number of bars in the histogram.
+
+```{r}
+
+hist(dataset_sbp$SBP,
+     breaks = 5)
+
+```
+
+```{r}
+
+hist(dataset_sbp$SBP,
+     breaks = 10)
+
+```
+We can change number of bars by setting `breaks = ` argument for `hist()` function.
+
+## hist() - continued
+
+By assigning `main = ` (title of histogram), `xlab = ` (x-axis label) and `ylab = ` (y-axis label), we can create a histogram with more detailed information.
+
+
+```{r}
+
+hist(dataset_sbp$SBP, 
+     breaks = 10,
+     main = "Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014",
+     xlab = "SBP (mmHg) of 1M Koreans",
+     ylab = "Number of measurements"
+     )
+
+```
+
+## hist() - percentage
+
+By imputing `density` variable of histogram, we can create a histogram with y axis that is having percentage.
+
+
+```{r}
+
+h <- hist(dataset_sbp$SBP,
+         breaks = 10, 
+         plot = F)
+
+h$density <- h$counts/sum(h$counts)*100
+
+plot(h,
+     freq = FALSE,
+     main = "Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014",
+     xlab = "SBP (mmHg) of 1M Koreans",
+     ylab = "Percentage of subject"
+     )
+
+```
+
+
+# Boxplot
+
+However, what should we do if we want to some summary statistic results as figures? Statisticians simply use boxplots. Boxplots can be generated by `boxplot()` command with information of what will be the x axis or colors.
+
+## boxplot() - simple
+
+We can directly put variable(vector) of our interest as `x`.
+
+```{r}
+
+boxplot(x = dataset_sbp$SBP,
+        main = "Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014",
+        ylab = "SBP (mmHg)"
+        )
+
+```
+
+## boxplot() - with x axis
+
+Boxplot is useful in comparing data, by adding more information along x-axis.
+To make more redundant boxplot, use `formula = y ~ x`. Here, `y` will be the variable of y-axis and x will be the x-axis.
+
+**Remember x should be categorical (discrete) data.**
+
+```{r}
+
+boxplot(formula = SBP ~ SEX,
+        data = dataset_sbp,
+        main = "Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014",
+        ylab = "SBP (mmHg)",
+        xlab = "Gender (male: 1, female: 2)"
+        )
+
+```
+
+## boxplot() - x-axis label
+
+we can also change x-axis texts with `names = ` argument.
+
+```{r}
+
+boxplot(SBP ~ SEX,
+        data = dataset_sbp,
+        main = "Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014",
+        ylab = "SBP (mmHg)",
+        xlab = "Gender",
+        names = c("Male",
+                  "Female")
+        )
+
+```
+
+# Question
+
+It seems like the histogram of SBP is somewhat having multiple peaks in the data. Can you tell why?
+
+```{r}
+
+hist(dataset_sbp$SBP,
+     breaks = 500, 
+     main = "Histogram of Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014 with 500 breaks",
+     xlab = "SBP (mmHg) of 1M Koreans",
+     ylab = "Number of measurements"
+     )
+
+```
+
+# Common distributions
+
+## Symmetric & bell-shaped
+
+```{r}
+
+hist(dataset_sbp$SBP,
+     breaks = 10, 
+     main = "Histogram of Systolic Blood Pressure (SBP)\nof 1M Koreans in 2013-2014 with 500 breaks",
+     xlab = "SBP (mmHg) of 1M Koreans",
+     ylab = "Number of measurements"
+     )
+
+```
+
+## Right (positively) skewed
+
+```{r}
+
+hist(dataset_sbp$FBS,
+     breaks = 10, 
+     main = "Fasting Blood Sugar (FBS) levels\nof 1M Koreans in 2013-2014",
+     xlab = "FBS (mg/L) of 1M Koreans",
+     ylab = "Number of measurements"
+     )
+
+```
+## Left (negatively skewed)
+
+
+```{r}
+
+hist(100-dataset_sbp$FBS,
+     breaks = 10, 
+     main = "100 - FBS",
+     xlab = "100 - FBS",
+     ylab = "Number of measurements"
+     )
+
+```
+
+## Uniform distributions
+
+```{r}
+hist(dataset_sbp$BTH_G,
+     breaks = 30, 
+     main = "Age of cohort",
+     xlab = "Age (years old)",
+     ylab = "Number of measurements"
+     )
+
+```
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
