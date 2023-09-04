@@ -89,7 +89,7 @@ FUN.LineZero.Report()
 
 ```
 
-# Tyeps of data
+# Working with data in R
 
 There are different type of data in R. The smallest data is called `data element`, and when data element is gathered (with orders), that chunk of data is called `vector`.
 
