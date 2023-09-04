@@ -1,0 +1,379 @@
+---
+title: "COD_week1_2_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-09-04"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 1-2"
+author: "Minsik Kim"
+date: "2032.09.04"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230904"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+# Tyeps of data
+
+There are different type of data in R. The smallest data is called `data element`, and when data element is gathered (with orders), that chunk of data is called `vector`.
+
+Here are some examples.
+
+## Data element
+
+```{r}
+alpha <- 1 # this is data element
+
+alpha # if we call alpha, computer will tell you what is assaigned as alpha.
+
+```
+
+## Vecetor
+
+To assign vector in R, we use `c()`, with comma `,` as separators. For example, 
+
+```{r}
+
+beta <- c(1, 2) # this is vector
+
+beta
+
+```
+
+
+```{r}
+gamma <- c(alpha, beta) # it is still a vector
+
+gamma
+
+```
+
+Remember vectors are **ordered**.
+
+```{r}
+
+delta <- c(beta, alpha) # it is still a vector
+
+delta
+
+```
+
+*If you call* `beta` *in R, it will find data named as *`beta`. *Then, how do we assign characters (letters, categorical variable)?* **R recognizes character values with **`""`. For instance,
+
+```{r}
+
+delta_2 <- c("beta", "alpha") 
+
+delta_2
+
+```
+
+With quotation marks, the R will recognize inputs as a new character data, not the data we assigned previously.
+
+
+# Data frame
+
+Then, what should we do with larger data, such as excel spread sheets?
+
+Vectors in R can be chucked together, **when their legnth is the same**.
+
+This is called data frame in R, and it can be assigned using `data.frame()` function.
+
+
+```{r}
+
+epsilon <- data.frame(gamma, delta) # this is data frame
+# note that the length of both gamma and delta is the same.
+
+epsilon
+
+```
+
+
+## Selecting variables (vectors) in data frame
+
+Data frame has columns, where each column is one variable (vectors)
+
+we use dollar sign to select one variable from data frame
+
+```{r}
+
+epsilon$gamma
+
+epsilon$delta
+
+
+```
+
+`epsilon$gamma` returns exact the same vector as just `gamma`, which was used for constructing epsilon.
+
+Then, how can we generate larger dataset to analyze something?
+
+## Data frame example
+
+We can make data by adding multiple data elements to vectors, and we can bind those vectors to make one dataframe.
+
+
+```{r}
+subject <- c("Joe", "Trump", "Obama", "George") #assigning multiple data as a vector
+height <- c(183, 190, 187, 182)
+IsTall <- c("short", "tall", "tall", "short")
+
+example_dataframe <- data.frame(subject, height, IsTall) #binding 3 vectors as one data frame
+
+example_dataframe #loading the example_data frame
+
+```
+
+## Loading data
+
+However, we are not going to type all the data whenever they are needed. To save our previous time, we will directly load the data frame from our computer (most commonly `.csv`, we can also import `.xlsx`) using `read.csv()` function.
+
+Here is the example of a SBP (systolic blood pressure) data from https://nhiss.nhis.or.kr/bd/ab/bdabf003cv.do.
+
+```{r}
+
+dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/datasets/sbp_dataset/sbp_dataset_korea_2013-2014.csv") 
+
+```
+
+The data is loaded as below. However, as it contains 1M lines of data, calling the data will make this document too long. Here, we can use `head()` or `tail()` functions to see only 10-first or 10-last dataset, respectively.
+
+## head() and tail() functions {.tabset}
+
+### head() 
+
+```{r}
+
+head(dataset_sbp)
+
+```
+
+### tail()
+
+```{r}
+
+tail(dataset_sbp)
+
+```
+
+### full dataset
+
+```{r}
+
+dataset_sbp
+
+```
+
+### {-}
+
+This shows (subsets of) gender, age group, SBP, DBP, FBS, DIS, and BMI data of 1,000,000 subjects. 
+
+For now, we will use dollar sign to select one variable from dataframe. Again, I will use head(function to check starting 10 data at this time)
+
+
+```{r}
+
+head(dataset_sbp$SBP)
+
+```
+
+Such a long data!
+
+# Basic R functions for statistics
+
+Now, let's use computer to calculate summary statistics of this large dataset.
+
+
+## Mean calculation
+
+Function for calculating mean is `mean()`
+
+```{r}
+mean(dataset_sbp$SBP)
+```
+
+This is the mean value of all the SBP data (1,000,000).
+
+## SD calculation
+
+Function for calculating standard deviation is `sd()`
+
+```{r}
+
+sd(dataset_sbp$SBP)
+
+```
+
+This is the SD.
+
+## Median
+
+function for calculating median: median()
+
+Median can be calculated by using `median()`
+
+
+```{r}
+
+median(dataset_sbp$SBP)
+
+```
+
+
+## Function for calculating quantile: qunatile()
+
+`quantile()` function has two functions. Without assigning any percentile value of our interest, it will list all the quantiles (0, 25%, 50%, 75% and 100% percentiles) at once.
+
+```{r}
+
+quantile(dataset_sbp$SBP)
+
+```
+
+As the output of `quantile()` shows multiple data element, the output is a **vector**. Kindly, this output also has names as well. To check what the data has output, we can test `str()`. 
+
+```{r}
+
+str(quantile(dataset_sbp$SBP))
+
+```
+
+The str() says it is `named numeric variable`.
+
+## quantile() - continued
+
+However, what should we do if we are curious about values at a specific percentile? In that case we need to give more information to functions.
+
+These information handed over to function are called **arguments**.
+
+As functions in R can have multiple inputs, we separate them with commas (`,`). 
+
+for example, 
+
+10% percentile of the SBP dataset can be calculated using
+
+```{r}
+
+quantile(x = dataset_sbp$SBP, 0.1)
+
+```
+
+# Use question mark to see what function is doing
+
+As thous functions were constructed by multiple , and there are lots of `packages` that can be newly installed to employ new functions in R. Developers listed all the details and instructions when they made new functions, and they can be reviewed by adding `questionmark` to a function.
+
+```{r}
+?quantile(data)
+```
+
+
+For some popular functions, details for `arguments` are usullally embeded on pop-ups. Use `tab` button to see what function can do.
+
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
