@@ -1,0 +1,750 @@
+---
+title: "COD_week4_1_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-09-19"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml", "ggplot2", "tidyverse", "swirl")
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 4-1"
+author: "Minsik Kim"
+date: "2032.09.19"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230904"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+```
+
+# Before begin..
+
+Let's load the SBP dataset.
+
+```{r}
+dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv") 
+
+head(dataset_sbp)
+
+```
+
+
+# Sampling distribution and variability
+
+Example 1
+
+Let's see this example. If we sample a small `subset` of data, the distribution will look different from larger set of samples.
+
+*Original data's histogram*
+
+```{r}
+
+hist(dataset_sbp$SBP, main = "Histogram of SBP")
+
+
+```
+
+# Sample variance
+
+*Let's say we sampled 2 samples from the original dataset.*
+
+```{r}
+
+set.seed(1)
+
+print("Two randomly selecte samples")
+
+dataset_sbp$SBP %>%
+             sample(2)
+
+print("Two randomly selecte samples -2 ")
+
+set.seed(2)
+
+
+dataset_sbp$SBP %>%
+             sample(2)
+
+
+```
+
+Two different random samplings showed difference in mean values.
+
+We call this sample variance.
+
+
+# Sampling distribution
+
+Let's see how they looks like in histogram. 
+
+This time, the sample number is slightly higher. 
+
+*Histogram of 10 samples from the dataset (run 1)*
+
+```{r}
+
+dataset_sbp$SBP %>%
+             sample(10) %>%
+        hist(main = "Histogram of SBP, N = 10", 10)
+
+```
+
+
+*Histogram of 10 samples from the dataset (run 2)*
+
+```{r}
+
+dataset_sbp$SBP %>%
+             sample(10) %>%
+        hist(main = "Histogram of SBP, N = 10")
+
+```
+
+We **randomly** *sampled* 10 dataset from the `dataset_SBP` and looked at their distribution. Do you think they look the same?
+
+No, unfortunately they are not.
+
+Since the sampling takes samples randomly, their mean, distribution is different.
+
+
+Of course, since this sampling was done by computer, we can make the sampling process ***reproducible*** by a `set.seed()` function in R.
+
+
+```{r}
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(10) %>%
+        hist(main = "Histogram of SBP, N = 10")
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(10) %>%
+        hist(main = "Histogram of SBP, N = 10")
+
+
+```
+      
+If we set the seed, the sample sampling procedure will use the `seed number` (in this case it was `1`) for it's algorithm. When the seed number is the same, the computer will generate the same data every time.
+
+
+*However*, can we set seed for actual sampling processes in the real world? As it is impossible, the samples are always different from the population, and this phenomena is called `sampling variability`.
+
+That means, in other words, the samples and their summary statistics actually cannot represent the population.
+
+Then, how can we estimate the population?
+
+
+Example data set for presentation material
+
+```{r}
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(20) %>%
+        hist(main = "Histogram of SBP, N = 20")
+
+dataset_sbp$SBP %>%
+        sample(20) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(50) %>%
+        hist(main = "Histogram of SBP, N = 50")
+
+dataset_sbp$SBP %>%
+        sample(50) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+```
+
+
+# Sample mean
+
+This time, let's do some other calculations.
+
+We are going to sample 20 samples (randomly), 5000 times. And then, let's see its histogram
+
+```{r}
+set.seed(1)
+replicate(5000, sample(dataset_sbp$SBP, 20)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean SBP from 1M subjects.\nEach sample N = 20",
+             xlim = c(105, 135))
+
+
+```
+
+What if we increase the number of random sampling?
+
+```{r}
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$SBP, 20)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean SBP from 1M subjects.\nEach sample N = 20",
+             xlim = c(105, 135))
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$SBP, 50)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean SBP from 1M subjects.\nEach sample N = 50",
+             xlim = c(105, 135))
+
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$SBP, 150)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean SBP from 1M subjects.\nEach sample N = 150",
+             xlim = c(105, 135))
+
+
+```
+
+
+How do they look?
+
+Let's see their variation in boxplots
+
+
+
+```{r}
+
+set.seed(1)
+dataset_pbs_r5000_n50_250_400 <- data.frame(`n = 50` = (replicate(5000, sample(dataset_sbp$FBS, 50)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 250` = (replicate(5000, sample(dataset_sbp$FBS, 250)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 400` = (replicate(5000, sample(dataset_sbp$FBS, 400)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, FBS, `n = 50`:`n = 400`, factor_key=TRUE) 
+
+dataset_pbs_r5000_n50_250_400 %>% 
+        boxplot(data = .,
+                FBS ~ condition, 
+                main = "Estimated sampling distribution, \nsample mean of 5000 random samples of \nn = 50, n = 250, and n = 400",
+                xlab = "Sample N of each ramdom sampling")
+
+```
+
+
+Summary table
+
+```{r}
+
+dataset_pbs_r5000_n50_250_400 %>% 
+        group_by(condition) %>%
+        summarise(mean = mean(FBS),
+                  sd = sd(FBS))
+
+dataset_sbp %>% 
+        summarise(mean = mean(FBS),
+                  sd = sd(FBS))
+```
+
+
+Note that the change in variation is dependent on N, not the number of repeat
+
+```{r}
+
+
+set.seed(1)
+
+dataset_sbp_r500_n20_50_150 <- data.frame(`n = 20` = (replicate(500, sample(dataset_sbp$SBP, 20)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 100` = (replicate(500, sample(dataset_sbp$SBP, 100)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 150` = (replicate(500, sample(dataset_sbp$SBP, 150)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, SBP, `n = 20`:`n = 150`, factor_key=TRUE) 
+
+set.seed(1)
+
+dataset_sbp_r50_n20_50_150 <- data.frame(`n = 20` = (replicate(50, sample(dataset_sbp$SBP, 20)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 100` = (replicate(50, sample(dataset_sbp$SBP, 100)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 150` = (replicate(50, sample(dataset_sbp$SBP, 150)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, SBP, `n = 20`:`n = 150`, factor_key=TRUE) 
+
+set.seed(1)
+
+dataset_sbp_r5000_n20_50_150 <- data.frame(`n = 20` = (replicate(5000, sample(dataset_sbp$SBP, 20)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 100` = (replicate(50, sample(dataset_sbp$SBP, 100)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 150` = (replicate(50, sample(dataset_sbp$SBP, 150)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, SBP, `n = 20`:`n = 150`, factor_key=TRUE) 
+
+dataset_sbp_r50_n20_50_150$`Number of repeat` <- 50
+dataset_sbp_r500_n20_50_150$`Number of repeat` <- 500
+dataset_sbp_r5000_n20_50_150$`Number of repeat` <- 5000
+
+
+rbind(dataset_sbp_r50_n20_50_150,
+      dataset_sbp_r500_n20_50_150,
+      dataset_sbp_r5000_n20_50_150) %>%
+        mutate(`Number of repeat` = as.factor(`Number of repeat`)) %>% 
+        ggplot(data = ., aes(x = condition, y = SBP)) +
+        geom_boxplot(aes(fill = `Number of repeat`)) +
+        ggtitle("Estimated sampling distribution, \nsample mean of some random samples of \nn = 20, n = 50, and n = 150") +
+        xlab("Sample N of each ramdom sampling")
+
+?geom_boxplot()
+
+```
+
+# Sample mean and sample distribution of skewed data
+
+As same as we observed the tendency of sample means with bell-shaped dataset, we are going to investigate skewed data
+
+*Original data's histogram*
+
+```{r}
+
+hist(dataset_sbp$FBS, main = "Histogram of FBS", 10)
+
+dataset_sbp %>% summarise(mean = mean(FBS),
+                              sd = sd(FBS))
+
+```
+
+## Sample variance
+
+*Let's say we sampled 2 samples from the original dataset.*
+
+```{r}
+
+set.seed(1)
+
+print("Two randomly selected samples")
+
+dataset_sbp$FBS %>%
+             sample(2)
+
+print("Two randomly selected samples -2 ")
+
+set.seed(2)
+
+
+dataset_sbp$FBS %>%
+             sample(2)
+
+
+```
+
+Two different random samplings showed difference in mean values.
+
+We call this sample variance.
+
+
+## Sampling distribution
+
+Let's see how they looks like in histogram. 
+
+This time, the sample number is slightly higher. 
+
+*Histogram of 10 samples from the dataset (run 1)*
+
+```{r}
+set.seed(3)
+dataset_sbp$FBS %>%
+             sample(10) %>%
+        hist(main = "Histogram of FBS, N = 10", 10)
+
+set.seed(3)
+dataset_sbp$FBS %>%
+        sample(10) %>%
+        data.frame() %>%
+        summarise(mean = mean(.),
+                              sd = sd(.))
+
+```
+
+
+Histograms of multiple random sampling and their sample mean
+
+
+```{r}
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$FBS, 50)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean FBS from 1M subjects.\nEach sample N = 50",
+             xlim = c(85, 120))
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$FBS, 250)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean FBS from 1M subjects.\nEach sample N = 250",
+             xlim = c(85, 120))
+
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$FBS, 400)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean FBS from 1M subjects.\nEach sample N = 400",
+             xlim = c(85, 120))
+
+
+```
+
+
+How do they look?
+
+Let's see their variation in boxplots
+
+
+
+```{r}
+
+set.seed(1)
+dataset_sbp_r5000_n20_50_150 <- data.frame(`n = 20` = (replicate(5000, sample(dataset_sbp$SBP, 20)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 100` = (replicate(5000, sample(dataset_sbp$SBP, 100)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 150` = (replicate(5000, sample(dataset_sbp$SBP, 150)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, SBP, `n = 20`:`n = 150`, factor_key=TRUE) 
+
+dataset_sbp_r5000_n20_50_150 %>% 
+        boxplot(data = .,
+                SBP ~ condition, 
+                main = "Estimated sampling distribution, \nsample mean of 5000 random samples of \nn = 20, n = 50, and n = 150",
+                xlab = "Sample N of each ramdom sampling")
+
+```
+
+
+Summary table
+
+```{r}
+
+dataset_sbp_r5000_n20_50_150 %>% 
+        group_by(condition) %>%
+        summarise(mean = mean(SBP),
+                  sd = sd(SBP))
+
+dataset_sbp %>% 
+        summarise(mean = mean(SBP),
+                  sd = sd(SBP))
+```
+
+
+# Binary variables
+
+Summary table
+
+The criteria for diagnosing hyper tension (high blood pressure) is as follows. 
+
+Normal: SBP less than 120 and DBP less than 80 mm Hg; Elevated: SBP 120 to 129 and DBP less than 80 mm Hg; Stage 1 hypertension: SBP 130 to 139 or DBP 80 to 89 mm Hg; Stage 2 hypertension: SBP greater than or equal to 140 mm Hg or DBP greater than or equal to 90 mm Hg.
+
+Using that categorization, we are going to create a new variable called `hypertension`.
+
+```{r}
+
+dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 | dataset_sbp$DBP > 80,
+                                   1,
+                                   0)
+
+```
+
+And the histogram of hypertension will look like this.
+
+```{r}
+
+dataset_sbp$hypertension %>% hist(main = "Histogram of hypertension")
+
+dataset_sbp$hypertension %>% mean
+
+```
+
+## Sample mean of binary variable
+
+If we take random 50 samples, due to sampling variation, the sample mean will show different results.
+
+```{r}
+set.seed(1)
+dataset_sbp$hypertension %>% sample(50) %>% hist(main = "Histogram of hypertension of \n 50 random samples")
+
+set.seed(1)
+dataset_sbp$hypertension %>% sample(50) %>% mean
+```
+
+```{r}
+
+dataset_sbp$hypertension %>% hist(main = "Histogram of hypertension")
+
+dataset_sbp$hypertension %>% mean
+
+```
+
+## Sampling distribution of binary variable
+
+```{r}
+set.seed(1)
+replicate(5000, sample(dataset_sbp$hypertension, 50)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean p-hat of hypertation from 1M subjects.\nEach sample N = 50",
+             xlim = c(0, 0.6))
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$hypertension, 150)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean p-hat of hypertation from 1M subjects.\nEach sample N = 150",
+             xlim = c(0, 0.6))
+
+
+
+set.seed(1)
+replicate(5000, sample(dataset_sbp$hypertension, 500)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 5000 sample mean p-hat of hypertation from 1M subjects.\nEach sample N = 500",
+xlim = c(0, 0.6))
+
+
+```
+
+## box plot 
+
+```{r}
+set.seed(1)
+dataset_hypertension_r5000_n_50_150_500 <- data.frame(`n = 50` = (replicate(5000, sample(dataset_sbp$hypertension, 50)) %>%
+                               data.frame %>%
+                               colMeans()),
+           `n = 150` = (replicate(5000, sample(dataset_sbp$hypertension, 150)) %>%
+                                data.frame %>%
+                                colMeans()),
+           `n = 500` = (replicate(5000, sample(dataset_sbp$hypertension, 500)) %>%
+                                data.frame %>%
+                                colMeans()),
+           check.names = F
+           ) %>%
+        gather(condition, hypertension, `n = 50`:`n = 500`, factor_key=TRUE) 
+
+dataset_hypertension_r5000_n_50_150_500 %>% 
+        boxplot(data = .,
+                hypertension ~ condition, 
+                main = "Estimated sampling distribution, \nsample mean of 5000 random samples of \nn = 50, n = 150, and n = 500",
+                xlab = "Sample N of each ramdom sampling",
+                ylab = "P-hat of mean of 5000 random sample sets")
+
+```
+## Summary table
+
+```{r}
+dataset_hypertension_r5000_n_50_150_500 %>%
+        group_by(condition) %>%
+        summarise(mean = mean(hypertension),
+                  sd = sd(hypertension))
+
+dataset_sbp %>% summarise(mean = mean(hypertension),
+                  sd = sd(hypertension))
+```
+
+
+# Standard error (SE)
+
+## Standard error of and it's theoretical value for it's subsets and sampling distribution
+
+```{r}
+
+dataset_sbp %>% summarise(mean = mean(SBP),
+                              sd = sd(SBP))
+
+sd(dataset_sbp$SBP)/sqrt(20)
+sd(dataset_sbp$SBP)/sqrt(100)
+sd(dataset_sbp$SBP)/sqrt(150)
+```
+
+
+## Standard error of sample proportions
+
+```{r}
+
+dataset_sbp %>% summarise(mean = mean(hypertension),
+                              sd = sd(hypertension))
+
+sd(dataset_sbp$hypertension)/sqrt(50)
+sd(dataset_sbp$hypertension)/sqrt(150)
+sd(dataset_sbp$hypertension)/sqrt(500)
+
+sd(dataset_sbp$hypertension)
+
+set.seed(8)
+dataset_sbp$hypertension %>% sample(100) %>% sd
+set.seed(1)
+dataset_sbp$hypertension %>% sample(100) %>% sd 
+set.seed(5)
+dataset_sbp$hypertension %>% sample(100) %>% sd 
+
+
+
+
+```
+
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
