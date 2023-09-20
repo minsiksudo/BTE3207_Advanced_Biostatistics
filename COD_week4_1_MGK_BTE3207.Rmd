@@ -610,6 +610,8 @@ dataset_sbp$hypertension %>% mean
 
 ```{r}
 set.seed(1)
+h_r_5000_n50 <- replicate(5000, sample(dataset_sbp$hypertension, 50)) 
+h_r_5000_n50 %>% data.frame() %>% colMeans()
 replicate(5000, sample(dataset_sbp$hypertension, 50)) %>%
         data.frame() %>% 
         colMeans() %>%
