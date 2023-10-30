@@ -1,0 +1,465 @@
+---
+title: "COD_Midterm_BTE3207"
+author: "Minsik Kim"
+date: "2023-10-21"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 7-1"
+author: "Minsik Kim"
+date: "2032.10.10"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230920"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+Function to be used.
+
+```{r}
+
+lm_eqn <- function(m){
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+```
+
+# Example 9
+
+```{r}
+
+p9_data <- data.frame(subejct = 1:8,
+                      before = c(126, 131, 129, 122, 130, 131, 128, 134),
+                      after = c(131, 121, 131, 114, 133, 119, 127, 129)) %>%
+        mutate(change = before - after)
+
+t.test(p9_data$change)
+#or
+t.test(p9_data$after, p9_data$before, paired = T)
+
+```
+
+# Example 10
+
+```{r}
+p10_data <- data.frame(subejct = 1:20,
+                       group =  c(replicate(10, "low_carb"), replicate(10, "low_fat")),
+                      data = c(-10.8, -10.6, 3.5, 10.4, -7.4, -2.6, -6.5, 1.7, -2.9, -7.6,
+                               -1.3, -0.9, -1.2, -0.5, -1.6, -0.9, -2.5, -5, -3.4, -1.9)) 
+
+t.test(x = subset(p10_data, p10_data$group == "low_carb")$data, 
+       y = subset(p10_data, p10_data$group == "low_fat")$data,
+       paired = F,
+       var.equal = F)
+
+
+```
+
+
+# Example 11
+
+```{r}
+
+p11_data <- data.frame(group = c("obese", "not_obese"),
+                       low_fat = c(52, 130),
+                       low_carb = c(30, 209),
+                       no_diet = c(90, 130)) %>%
+        column_to_rownames("group") %>% t %>% data.frame()
+
+library(epitools)
+
+oddsratio(as.matrix(p11_data), rev = "rows")
+
+chisq.test(p11_data)
+
+
+```
+
+# Example 12
+
+```{r}
+
+p12_data <- data.frame(group = c("hypertension", "normal"),
+                       low_fat = c(89, 102),
+                       low_carb = c(93, 137)) %>%
+        column_to_rownames("group")
+
+
+chisq.test(p12_data)
+
+```
+
+
+# Statistics on the results
+
+
+# Score data in baxplot - by each problem set
+
+```{r}
+
+midterm <- readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx") %>%
+        tidyr::gather(., problemset, score, `1`:`12`, factor_key=TRUE)
+
+midterm %>% 
+        ggplot(aes(x = problemset, y = score, fill = problemset)) +
+                       geom_boxplot() +
+        scale_fill_brewer(name = "Problem set",
+                          type = "qual", 
+                          palette = 3) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        xlab("Problem set") +
+        ylab("Score")
+
+
+```
+
+
+# Score data in histogram - by each problem set
+
+```{r}
+midterm %>% 
+        ggplot(aes(x = score, fill = problemset)) +
+        geom_histogram() +
+        scale_fill_brewer(name = "Problem set",
+                          type = "qual", 
+                          palette = 3) +
+        facet_wrap(~problemset, scales = "free") +
+        #guide_legend(title = "Problem set") +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        ylab("Number of students")
+
+                       
+
+```
+
+# Score total - summary statistics
+
+```{r}
+
+readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx") %>% 
+        .$total %>%
+        summary
+
+```
+
+
+# Score total - boxplot and histogram
+
+```{r}
+
+a <- merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       ) %>%
+        mutate(year = as.factor(year)) %>% 
+        ggplot(aes(y = total)) +
+        geom_boxplot() +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        theme(legend.position = "top",
+              axis.text.x = element_blank()) + 
+        xlab("") +
+        ylab("Total score")
+
+
+b <- merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       ) %>%
+        mutate(year = as.factor(year)) %>% 
+        ggplot(aes(x = total)) +
+        geom_histogram(binwidth = 7) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        theme(legend.position = "top") + 
+        xlab("Score") +
+        ylab("Number of students")
+        
+ggpubr::ggarrange(a, b, align = "hv", widths = c(1,3))
+
+```
+
+# For fun, a statistical test
+
+Is there a different between junior and senior?
+
+# Total score - boxplot by year
+
+```{r}
+
+merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       ) %>%
+        mutate(year = as.factor(year)) %>% 
+        ggplot(aes(y = total, x = year, fill = year)) +
+        geom_boxplot() +
+        #facet_wrap(~year, ncol = 1) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        ylab("Score") +
+        xlab("Year of study at Inha")
+        
+
+
+```
+
+# Total score - histogram by year
+
+```{r}
+
+merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       ) %>%
+        mutate(year = as.factor(year)) %>% 
+        ggplot(aes(x = total, fill = year)) +
+        geom_histogram(aes(y = ..density..),
+                       binwidth = 2, position = position_identity(), alpha = 0.5) +
+        scale_fill_brewer(name = "Year of study at Inha",
+                          type = "qual", 
+                          palette = 6) +
+        #facet_wrap(~year, ncol = 1) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        theme(legend.position = "top") + 
+        xlab("Score") +
+        ylab("Number of students")
+
+
+
+
+```
+
+
+t-test (unpaired, unequal variance)
+
+H<sub>0</sub> (null hypothesis): true difference in means is 0, i.e., there is no difference between junior and senior
+H<sub>a</sub> (alternative hypothesis): true difference in means is not equal to 0.
+
+
+
+```{r}
+
+data <- merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       )
+        
+
+t.test(subset(data, data$year == "4") %>% .$total,
+       subset(data, data$year == "3") %>% .$total,
+       paired = F, var.equal = F)
+
+
+
+        
+```
+
+**p**-value is 0.48. Therefore, we accect the null hypothesis (there is no significant difference between mean of junior and senior).
+
+
+Alternatively,
+
+```{r}
+
+merge(readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Midterm_result/BTE3207_2023F_midterm_results.xlsx"),
+        readxl::read_excel("/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/BTE3207_2023F_students_list.xlsx") %>% rename(student_id = "학번",
+       department = "학부(과)",
+       major = "전공",
+       year = "학년") %>% select(c("student_id", "department", "major", "year")),
+       by = "student_id", all = T
+       ) %>%
+        mutate(year = as.factor(year)) %>%
+        lm(total ~ year, data = .) %>% 
+        summary
+
+
+```
+
+
+Correlation - % score by their orders
+
+```{r}
+
+midterm <- midterm %>%
+        mutate(problem_full_score = case_when(problemset == 1 ~ 6,
+                                      problemset == 2 ~ 5,
+                                      problemset == 3 ~ 5,
+                                      problemset == 4 ~ 5,
+                                      problemset == 5 ~ 5,
+                                      problemset == 6 ~ 5,
+                                      problemset == 7 ~ 9,
+                                      problemset == 8 ~ 5,
+                                      problemset == 9 ~ 6,
+                                      problemset == 10 ~ 6,
+                                      problemset == 11 ~ 9,
+                                      problemset == 12 ~ 8,
+                                      .default = 0),
+               perc_score = score/problem_full_score * 100)
+
+
+midterm %>% 
+        ggplot(aes(x = as.numeric(problemset), y = perc_score, color = as.numeric(problemset))) +
+                geom_jitter() +
+                theme_classic(base_family = "serif", base_size = 20) +
+                viridis::scale_color_viridis() + 
+                xlab("Problem set order") +
+                ylab("% right answer") #+ 
+                #geom_smooth(method = "lm") 
+
+midterm %>% 
+        ggplot(aes(x = as.numeric(problemset), y = perc_score, color = as.numeric(problemset))) +
+                geom_jitter() +
+                theme_classic(base_family = "serif", base_size = 20) +
+                viridis::scale_color_viridis() + 
+                xlab("Problem set order") +
+                ylab("% right answer") + 
+                geom_smooth(method = "lm") +
+                geom_label(x = 7.5, y = 100,
+                  label = lm_eqn(lm(data = midterm,perc_score ~ as.numeric(problemset))),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+
+```
+
+
+```{r}
+
+lm(data = midterm, perc_score ~ as.numeric(problemset)) %>% summary
+
+```
+
+We are going to learn more about the linear model, at the later half of the semester!
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```

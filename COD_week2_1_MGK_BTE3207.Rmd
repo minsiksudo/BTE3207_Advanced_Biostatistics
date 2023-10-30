@@ -3,8 +3,8 @@ title: "COD_week2_1_MGK_BTE3207"
 author: "Minsik Kim"
 date: "2023-09-04"
 output:
-        rmdformats::downcute:
-        downcute_theme: "chaos"
+rmdformats::downcute:
+downcute_theme: "chaos"
 code_folding: show
 fig_width: 6
 fig_height: 6
