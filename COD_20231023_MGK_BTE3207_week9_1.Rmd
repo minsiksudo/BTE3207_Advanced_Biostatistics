@@ -1,0 +1,332 @@
+---
+title: "COD_week9_1_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-10-23"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml", "knitr")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 9-1"
+author: "Minsik Kim"
+date: "2032.10.23"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230920"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+# Before begin..
+
+Let's load the SBP dataset.
+
+```{r}
+
+dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+
+
+
+head(dataset_sbp)
+
+```
+
+Making function
+
+```{r}
+
+lm_eqn <- function(m){
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+
+```
+
+Making a new variable `hypertension`
+
+```{r}
+
+dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
+                                           dataset_sbp$DBP > 80,
+                                   T,
+                                   F)
+
+
+```
+
+# Correlation plot
+
+With a correlation plot, we can see
+
+```{r}
+
+set.seed(1)
+dataset_sbp_small <- subset(dataset_sbp, row.names(dataset_sbp) %in% sample(x = 1:1000000, size = 1000))
+
+ggplot(data = dataset_sbp_small, aes(x = SBP, y = DBP)) +
+        geom_point() +
+        theme_classic( base_family = "serif", base_size = 20) +
+        xlab("SBP (mmHg)") +
+        ylab("DBP (mmHg)")
+        
+
+
+
+```
+
+# Data with trendline
+
+```{r}
+
+set.seed(1)
+dataset_sbp_small <- subset(dataset_sbp, row.names(dataset_sbp) %in% sample(x = 1:1000000, size = 1000))
+
+ggplot(data = dataset_sbp_small, aes(x = SBP, y = DBP)) +
+        geom_point() +
+        theme_classic( base_family = "serif", base_size = 20) +
+        xlab("SBP (mmHg)") +
+        ylab("DBP (mmHg)") + 
+        geom_smooth(method = "lm") +
+        geom_label(x = 130, y = 115,
+                  label = lm_eqn(lm(data = dataset_sbp_small,DBP ~ SBP)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+
+
+
+#rnorm(100, mean = 100, sd = 1)
+
+```
+
+
+
+
+```{r}
+
+set.seed(1)
+lm_result <- subset(dataset_sbp, row.names(dataset_sbp) %in% sample(x = 1:1000000, size = 1000)) %>%
+        lm(data = .,DBP ~ SBP) #%>% summary
+
+d <- dataset_sbp_small
+predict(lm_result)
+predict(object = lm_result)
+
+d$predicted <- lm_result$fitted.values
+d$residuals <- residuals(lm_result)
+
+library(ggplot2)
+ggplot(d, aes(x = SBP, y = DBP)) +
+        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point() +
+        theme_classic( base_family = "serif", base_size = 20) +
+        geom_label(x = 130, y = 115,
+                  label = lm_eqn(lm(data = dataset_sbp_small,DBP ~ SBP)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+  
+```
+
+# Data with binary variable
+
+
+```{r}
+
+ggplot(data = dataset_sbp_small, aes(x = as.factor(SEX), y = SBP)) +
+        geom_boxplot() +
+        theme_classic(base_size = 20, base_family = "serif") +
+        scale_x_discrete(breaks=c("1", "2"),
+                         labels=c("Male", "Female")) + 
+        xlab("Gender") +
+        ylab("SBP (mmHg)")
+```
+
+
+```{r}
+
+ggplot(data = dataset_sbp_small, aes(x = as.factor(SEX), y = SBP)) +
+        geom_point() +
+        theme_classic( base_family = "serif", base_size = 20) +
+        scale_x_discrete(breaks=c("1", "2"),
+                         labels=c("Male", "Female")) + 
+        xlab("Gender") +
+        ylab("SBP (mmHg)") + 
+        geom_smooth(method = "lm")
+```
+
+
+
+```{r}
+
+
+dataset_sbp_small <- dataset_sbp_small %>% 
+        mutate(Gender = ifelse(dataset_sbp_small$SEX == 1, 0, 1)) 
+
+
+
+
+dataset_sbp_small %>%
+        ggplot(aes(x = Gender, y = SBP)) +
+        geom_point() +
+                #scale_x_discrete(breaks=c("1", "2"),
+                #                 labels=c("Male", "Female")) + 
+        xlab("Gender (0 = Male, 1 = Female)") +
+        ylab("SBP (mmHg)") + 
+        geom_smooth(method = "lm") +
+        geom_label(x = 0.5, y = 140,
+                  label = lm_eqn(lm(data = dataset_sbp_small, SBP ~ Gender)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue") + 
+        theme_classic(base_family = "serif", base_size = 20)
+        #theme(text = element_blank())
+        #stat_poly_eq(use_label(c("eq", "R2"))) +
+
+```
+
+```{r}
+lm(data = dataset_sbp_small, SBP ~ Gender) %>% summary
+
+t.test(SBP ~ Gender, data = dataset_sbp_small, paired = F, var.equal = F) # Extract the confidence interval 
+
+
+t.test(SBP ~ Gender, data = dataset_sbp_small, paired = F, var.equal = F)$est[1] - t.test(SBP ~ Gender, data = dataset_sbp_small, paired = F, var.equal = F)$est[2]
+
+```
+
+# Data with categorical variable
+
+
+```{r}
+
+ggplot(data = dataset_sbp_small, aes(x = as.factor(DIS), y = SBP)) +
+        geom_boxplot() +
+        theme_classic( base_family = "serif", base_size = 20) +
+        xlab("Hypertension and diabete history") +
+        ylab("SBP (mmHg)") 
+
+
+```
+```{r}
+
+lm(SBP ~ as.factor(DIS), data = dataset_sbp_small) %>% summary
+
+```
+
+
+
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
