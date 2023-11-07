@@ -435,6 +435,8 @@ Pearson's correlation can be calculated using `stats::cor()` function.
 #THis is Pearson's correlation coefficient
 cor(dataset_sbp_small$DBP, dataset_sbp_small$SBP)
 
+lm(data = dataset_sbp_small, SBP ~ SEX) %>% confint
+
 
 ```
 
