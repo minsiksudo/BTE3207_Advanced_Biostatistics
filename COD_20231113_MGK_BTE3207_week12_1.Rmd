@@ -1,0 +1,936 @@
+---
+title: "COD_week11_2_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-11-08"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+        
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 11-2"
+author: "Minsik Kim"
+date: "2032.11.5"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230920"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml", "lmerTest"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+# Random effect dataset
+
+https://stats.idre.ucla.edu/
+
+https://rpubs.com/rslbliss/r_mlm_ws
+
+https://methods101.com.au/docs/soci832_11_3_multilevel_models_week_11/
+
+
+Dataset is students from 10 handpicked schools, representing a subset of students and schools from a US survey of eight-grade students at 1000 schools (800 public 200 private).
+
+There are quite a lot of variables in the dataset, but we are going start by using just three:
+
+```
+
+ # Variable Type Len Pos Label
+-----------------------------------------------------------------------------------------------
+15 cstr     Num    8 112
+5 homework Num    8  32 Time spent on math homework each week
+11 math     Num    8  80 Math score
+4 meanses  Num    8  24 Mean SES for the school
+7 parented Num    8  48 Parents highest education level
+
+10 percmin  Num    8  72 Percent minority in school
+ 8 public   Num    8  56 Public school: 1=public, 0=non-public
+13 race     Num    8  96 race of student, 1=asian, 2=Hispanic, 3=Black, 4=White, 5=Native American
+ 9 ratio    Num    8  64 Student-Teacher ratio
+18 region   Num    8 136
+ 1 schid    Num    8   0 School ID
+19 schnum   Num    8 144 group(schid)
+16 scsize   Num    8 120
+14 sctype   Num    8 104 Type of school, 1=public, 2=catholic, 3=Private
+                         other religious, 4=Private non-r
+ 3 ses      Num    8  16 Socioecnonomic Status
+12 sex      Num    8  88 Sex: 1=male, 2=female
+ 2 stuid    Num    8   8 Student ID
+17 urban    Num    8 128
+ 6 white    Num    8  40 Race: 1=white, 0=non-white
+ ```
+ 
+ Here,
+
+*homework*: number of hours of homework - Level 1 variable (associated with students)
+*math*: score in a math test - expanatory variable
+*schnum*: a number for each school - Level 2 variable (associated with school)
+*scsize*: school size - Level 2 variable
+*public*: school type - Level 2 variable
+
+
+```{r}
+
+library(haven)
+
+imm10_data <- read_dta("https://stats.idre.ucla.edu/stat/examples/imm/imm10.dta") 
+
+```
+
+# data visualization
+
+## Summary data
+
+```{r}
+
+hist(imm10_data$math)
+
+table(imm10_data$homework)
+
+table(imm10_data$schnum)
+
+table(imm10_data$public)
+
+
+```
+
+
+## Random intercept - two groups {.tabset}
+
+
+```{r}
+imm10 <- imm10_data 
+imm10
+```
+
+### Visualization of models
+
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() + 
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+When we look into binary variable,
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8, aes(colour = as.factor(public))) +
+        theme_classic() + 
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(color='Publick school') 
+
+
+```
+
+Store simple linear regression
+
+```{r}
+model1 <- lm(math ~ homework, data = imm10)
+imm10$FEPredictions <- fitted(model1)
+slm_est <- coef(summary(model1))[ , "Estimate"]
+slm_se <- coef(summary(model1))[ , "Std. Error"]
+
+```
+
+Multiple linear regression with binary variable
+
+
+```{r}
+
+library(moderndive)
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_parallel_slopes(aes(col = factor(imm10$public)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$public))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+Simple vs multiple (binary)
+
+```{r}
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$public)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$public))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with Simple linear regression")
+
+        
+print(gg)
+
+```
+Making random effect model
+
+```{r}
+
+
+
+library(lmerTest)
+library(lme4)
+
+model2 <- lmer(data = imm10, math ~ homework + (1|public))
+
+summary(model2)
+
+```
+
+Mixed effect model vs multiple (binary)
+
+
+```{r}
+imm10$FEPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$public)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$public))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with randeom effect (multi level analysis)")
+
+        
+print(gg)
+
+```
+
+# With effect modification...
+
+Multiple linear regression with effect modification (binary)
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$public)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$public))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+# Simple LM + interaction term
+
+Simple vs Multiple linear regression with effect modification (binary)
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$public)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$public))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+# Random effect
+
+Calculation of random slope
+
+```{r}
+
+
+model2 <- lme4::lmer(data = imm10, math ~ homework + (homework|public)) 
+
+summary(model2)
+
+lmerTest::lmer(data = imm10, math ~ homework + (homework|public)) %>% summary
+
+```
+
+Mixed model with random slope vs Multiple linear regression with effect modification (binary)
+
+```{r}
+
+imm10$REPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+ml_est
+
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework, col=factor(imm10$public))) +
+        geom_smooth(method = "lm", se = F) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+        
+
+print(gg)
+```
+
+
+# The sample analysis can be done for a categorical variable
+
+## Data filtering
+
+```{r}
+imm10 <- imm10_data %>% filter(schnum == 2 | schnum == 3 | schnum == 4 )
+
+```
+
+### Visualization of models
+
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() + 
+        ylab("Math test result") +
+        ylab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8, aes(colour = as.factor(schnum))) +
+        theme_classic() + 
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+```{r}
+model1 <- lm(math ~ homework, data = imm10)
+imm10$FEPredictions <- fitted(model1)
+slm_est <- coef(summary(model1))[ , "Estimate"]
+slm_se <- coef(summary(model1))[ , "Std. Error"]
+
+```
+
+```{r}
+
+library(moderndive)
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+
+
+```{r}
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with Simple linear regression")
+
+        
+print(gg)
+
+```
+
+
+```{r}
+
+
+
+library(lmerTest)
+library(lme4)
+
+model2 <- lmer(data = imm10, math ~ homework + (1|schnum))
+
+imm10$FEPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with randeom effect (multi level analysis)")
+
+        
+print(gg)
+
+```
+
+# With effect modification...
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$schnum)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+
+
+# Simple LM + interaction term
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$schnum)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+# Random effect
+
+```{r}
+
+imm10$schnum <- as.factor(imm10$schnum)
+
+model2 <- lme4::lmer(data = imm10, math ~ homework + (homework|schnum)) 
+
+summary(model2)
+
+```
+
+```{r}
+
+imm10$REPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+ml_est
+
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework, col=factor(imm10$schnum))) +
+        geom_smooth(method = "lm", se = F) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+        
+
+print(gg)
+```
+
+
+# Categorical variable with more factors
+
+## Data filtering
+
+```{r}
+imm10 <- imm10_data
+imm10
+```
+
+### Visualization of models
+
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() + 
+        ylab("Math test result") +
+        ylab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8, aes(colour = as.factor(schnum))) +
+        theme_classic() + 
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+```{r}
+model1 <- lm(math ~ homework, data = imm10)
+imm10$FEPredictions <- fitted(model1)
+slm_est <- coef(summary(model1))[ , "Estimate"]
+slm_se <- coef(summary(model1))[ , "Std. Error"]
+
+```
+
+```{r}
+
+library(moderndive)
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+
+
+```{r}
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with Simple linear regression")
+
+        
+print(gg)
+
+```
+
+
+```{r}
+
+
+
+library(lmerTest)
+library(lme4)
+
+model2 <- lmer(data = imm10, math ~ homework + (1|schnum))
+
+imm10$FEPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_parallel_slopes(aes(col = factor(imm10$schnum)), se =F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') +
+        ggtitle("Modeling with randeom effect (multi level analysis)")
+
+        
+print(gg)
+
+```
+
+# With effect modification...
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$schnum)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+
+
+# Simple LM + interaction term
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$schnum)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+# Random effect
+
+```{r}
+
+imm10$schnum <- as.factor(imm10$schnum)
+
+model2 <- lme4::lmer(data = imm10, math ~ homework + (homework|schnum)) 
+
+summary(model2)
+
+```
+
+```{r}
+
+imm10$REPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+ml_est
+
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework, col=factor(imm10$schnum))) +
+        geom_smooth(method = "lm", se = F) +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+        
+
+print(gg)
+```
+
+
+
+# Simple LM + interaction term
+
+
+```{r}
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1) +
+        geom_smooth(method = "lm", aes(col = factor(imm10$schnum)), se = F) +
+        geom_point(size = 1.5, alpha = 0.8, aes(color=factor(imm10$schnum))) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+
+        
+print(gg)
+
+```
+
+# Continuous random effect - scool size
+
+## Data filtering
+
+```{r}
+imm10 <- imm10_data
+imm10
+```
+
+
+# The same analysis but with a continuous variable
+
+
+### Visualization of models
+
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() + 
+        ylab("Math test result") +
+        ylab("Hours spent on homework") +
+        labs(color='School') 
+
+
+```
+
+```{r}
+
+ggplot(imm10, aes(y = math, x = homework)) +
+        geom_smooth(method = lm, color = "black") +
+        geom_point(size = 1.5, alpha = 0.8, aes(colour = meanses)) +
+        theme_classic() +
+        scale_color_viridis_c() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(color='Mean socio economic status (by schoool)') 
+
+
+```
+
+```{r}
+model1 <- lm(math ~ homework + meanses, data = imm10)
+imm10$FEPredictions <- fitted(model1)
+slm_est <- coef(summary(model1))[ , "Estimate"]
+slm_se <- coef(summary(model1))[ , "Std. Error"]
+
+```
+
+```{r}
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        facet_wrap(~meanses) + 
+        geom_smooth(method = "lm", se =F) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+print(gg)
+
+```
+
+Grey is regular simple linear regression, and 
+red is regular mixed linear regression
+
+```{r}
+
+model2 <- lmer(data = imm10, math ~ homework + (1|meanses))
+
+imm10$FEPredictions <- fitted(model2)
+ml_est <- coef(summary(model2))[ , "Estimate"]
+ml_se <- coef(summary(model2))[ , "Std. Error"]
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        facet_wrap(~meanses) + 
+        geom_smooth(method = "lm", se =F) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1, col = "grey") +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1, col = "red") +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+print(gg)
+
+```
+
+
+### Ultimate model
+
+```{r}
+
+imm10 <- imm10_data 
+model5 <- lmer(math ~ homework + ses + meanses + (homework|schnum) + (meanses|region), REML=FALSE, data = imm10)
+summary(model5)
+
+```
+
+
+
+
+```{r}
+
+imm10$REPredictions <- fitted(model5)
+ml_est <- coef(summary(model5))[ , "Estimate"]
+ml_se <- coef(summary(model5))[ , "Std. Error"]
+ml_est
+
+
+
+gg <- ggplot(imm10, aes(y = math, x = homework)) +
+        facet_wrap(~meanses) + 
+        geom_smooth(method = "lm", se =F) +
+        geom_point(size = 1.5, alpha = 0.8) +
+        geom_abline(slope = slm_est[2], intercept = slm_est[1], size=1, col = "grey") +
+        geom_abline(slope = ml_est[2], intercept = ml_est[1], size=1, col = "red") +
+        theme_classic() +
+        ylab("Math test result") +
+        xlab("Hours spent on homework") +
+        labs(col='School') 
+print(gg)
+
+```
+
+Rather then homework, the socio economic status is more important.
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
