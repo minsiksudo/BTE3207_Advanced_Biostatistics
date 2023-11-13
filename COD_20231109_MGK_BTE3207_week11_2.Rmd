@@ -17,7 +17,7 @@ markdown:
         
         
         
-```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup, cache=TRUE}
 #===============================================================================
 #BTC.LineZero.Header.1.1.0
 #===============================================================================
@@ -30,7 +30,7 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c("tidyverse", "pacman", "yaml")
 
@@ -96,7 +96,6 @@ FUN.LineZero.Report()
 
 `The framing data` contains 265 rows and 15 columns of data from a framing experiment conducted by Brader, Valentino and Suhay (2008).
 
-
 Brader et al. (2008) conducted a randomized experiment where subjects are exposed to different media stories about immigration and the authors investigated how their framing influences attitudes and political behavior regarding immigration policy. They posit anxiety as the mediating variable for the causal effect of framing on public opinion. We first fit the mediator model where the measure of anxiety (emo) is modeled as a function of the framing treatment (treat) and pre-treatment covariates (age, educ, gender, and income). Next, we model the outcome variable, which is a binary variable indicating whether or not the participant agreed to send a letter about immigration policy to his or her member of Congress (cong_mesg). The explanatory variables of the outcome model include the mediator, treatment status, and the same set of pre-treatment variables as those used in the mediator model.1 In this example, the treatment is expected to increase the level of respondents’ emotional response, which in turn is hypothesized to make subjects more likely to send a letter to his or her member of Congress. We use the linear regression fit with least squares and the probit regression for the mediator and outcome models, respectively.
 
 https://www.jstor.org/stable/25193860
@@ -150,6 +149,7 @@ Subjects' gender.
 
 income:
 Subjects' income, measured as a 19-point scale.
+
 
 ```{r}
 
@@ -298,7 +298,6 @@ summary(med.out)
 
 ```
 
-mixed effect models
 
 # Bibliography
 
