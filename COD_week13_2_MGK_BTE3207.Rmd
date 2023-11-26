@@ -30,7 +30,7 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c("tidyverse", "pacman", "yaml")
 
@@ -135,13 +135,13 @@ You can run a miultiple linear regression that is containing all the data!
 
 ```{r}
 library(tidyverse)
-read.csv("/Volumes/MacMini Drive/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv") %>%
+read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv") %>%
         names 
 ```
 
 ```{r}
  lm(Biomass ~ Glucose + YE + KH2PO4 + K2HPO4 + MgSO4 + CaCl2 + FeSO4 + Fructose + NH4Cl + TM + Vitamin,
-    data = read.csv("/Volumes/MacMini Drive/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv")) %>% summary
+    data = read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv")) %>% summary
 ```
 
 This is your Plackett-Burman result.
