@@ -1,0 +1,814 @@
+---
+title: "COD_week14_1_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-11-28"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+        
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+               "/Volumes/MacMini Drive/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/", 
+               "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/")
+path_library <- 
+        "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 13-2"
+author: "Minsik Kim"
+date: "2032.11.24"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230920"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml", "lmerTest", "vegan", "phyloseq", "ggplot"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+# Agenda
+
+This lecture will practice running 
+
+1. running regerssion analysis to binary outcomes (logistic regression)
+
+and
+
+2. Multiple hypothesis testing
+
+# Before begin..
+
+Let's load the data
+
+```{r}
+
+download.file("dataset/sbp_dataset_korea_2013-2014.csv","https://github.com/minsiksudo/BTE3207_Advanced_Biostatistics/blob/main/dataset/sbp_dataset_korea_2013-2014.csv")
+
+dataset_sbp <- read.csv("dataset/sbp_dataset_korea_2013-2014.csv")
+
+```
+
+
+```{r}
+
+dataset_sbp$BTH_G %>% hist
+
+```
+Where, each level of BTH_G means
+1: 20 to 24 years old
+2: 25 to 26 years old
+...
+26: is 73 to 74
+27: 75 years old or older.
+
+# Data manipulation
+
+from this dataset, we can calulate 
+
+## Hypertension
+
+```{r}
+dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
+                                           dataset_sbp$DBP > 80,
+                                   1,
+                                   0) %>%
+        as.factor
+
+```
+
+
+
+## Obesity
+
+```{r}
+dataset_sbp$obesity <- ifelse(dataset_sbp$BMI > 25,
+                                   1,
+                                   0) %>% 
+        as.factor()
+```
+
+
+
+
+
+## Female (re-level)
+
+```{r}
+dataset_sbp$Female <- ifelse(dataset_sbp$SEX == 2, 
+                          1,
+                          0) %>%
+        as.factor
+```
+
+
+
+
+## DIS (re-level)
+
+```{r}
+dataset_sbp$DIS <- factor(dataset_sbp$DIS, 
+                          levels = c(1,2,3,4),
+                          labels = c("Hypertension and diabetes",
+                                     "Hypertension",
+                                     "Diabetes",
+                                     "No history"))
+```
+
+
+```{r}
+set.seed(1)
+
+dataset_sbp_small <- subset(dataset_sbp,
+                        row.names(dataset_sbp)%in% sample(x = 1:1000000, size = 1000))
+
+```
+
+# Generating table
+
+```{r}
+table(dataset_sbp$obesity,dataset_sbp$Female)
+
+
+```
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(x = Female, y = obesity)) +
+        geom_point() +
+        ylab("Fasting blood sugar (mg/dL)") +
+        theme_classic()
+
+```
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(x = FBS, y = obesity)) +
+        geom_point() +
+        ylab("Fasting blood sugar (mg/dL)") +
+        theme_classic()
+
+```
+
+```{r}
+male_oo <- table(dataset_sbp$obesity,dataset_sbp$SEX)[2,1]/table(dataset_sbp$obesity,dataset_sbp$SEX)[1,1]
+female_oo <- table(dataset_sbp$obesity,dataset_sbp$SEX)[2,2]/table(dataset_sbp$obesity,dataset_sbp$SEX)[1,2]
+
+odds_ratio_female_to_male <- female_oo/male_oo
+odds_ratio_female_to_male
+
+
+```
+
+# Logistic regression with binary input (unadjusted)
+
+
+```{r}
+glm_obesity_gender <- glm(data = dataset_sbp, obesity ~ Female,family = "binomial")
+summary(glm_obesity_gender)
+
+```
+
+```{r}
+glm_obesity_gender$coefficients["Female1"][[1]]
+```
+
+
+```{r}
+glm_obesity_gender$coefficients["Female1"][[1]] %>% exp()
+```
+
+The odds ratio of obesity from male to female is 0.5788211.
+
+## confidence interval
+
+
+```{r}
+confint(glm_obesity_gender)
+```
+
+After exponemtial transformation...
+
+```{r}
+confint(glm_obesity_gender) %>% exp
+```
+
+
+# With continuous variable
+
+```{r}
+glm_obesity_fbs <- glm(data = dataset_sbp, obesity ~ FBS,family = "binomial")
+summary(glm_obesity_fbs)
+
+```
+
+```{r}
+
+confint(glm_obesity_fbs) %>% exp
+
+```
+
+# Multiple logistic regression
+
+In case the Gender and FBS as correlation, they may adjust the effect of obese
+
+## Data visualiation
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(x = Female, y = FBS)) +
+        geom_boxplot() +
+        ylab("Fasting blood sugar (mg/dL)") +
+        theme_classic()
+
+```
+
+Does the FBS differ by Gender?
+
+```{r}
+
+lm(dat = dataset_sbp, FBS ~ Female) %>%
+        summary
+
+```
+It looks like so.
+
+Let's run multiple logistic regression 
+
+
+```{r}
+
+glm(data = dataset_sbp, obesity ~ Female,family = "binomial") %>% confint() %>% exp
+
+
+
+
+glm(data = dataset_sbp, obesity ~ FBS,family = "binomial") %>% confint() %>% exp
+
+
+glm(data = dataset_sbp, obesity ~ DIS,family = "binomial") %>% confint() %>% exp
+
+
+
+
+
+glm_obesity_gender_fbs <- glm(data = dataset_sbp, obesity ~ Female + FBS,family = "binomial")
+glm_obesity_gender_fbs %>% confint() %>% exp
+
+glm(data = dataset_sbp, obesity ~ Female + FBS + DIS,family = "binomial") %>% confint() %>% exp
+
+
+
+```
+
+## Confidence intervals 
+
+```{r}
+
+confint(glm_obesity_gender_fbs)
+
+```
+```{r}
+
+confint(glm_obesity_gender_fbs) %>% exp
+
+```
+
+
+# Effect modification
+
+To see if there is a effect modication, anova can be used.
+
+```{r}
+
+
+glm_obesity_gender_fbs_int <- glm(data = dataset_sbp, obesity ~ Female * FBS,family = "binomial")
+anova(glm_obesity_gender_fbs_int, test = "F")
+
+```
+
+
+```{r}
+
+summary(glm_obesity_gender_fbs_int)
+
+```
+
+# Binomial distribution
+
+How can we caclulate the confidence interval?
+
+
+
+# Data visualization of logistic regression
+
+
+## For categorical varaibles
+
+We can visualize the Odds ratio and its confidence interval using `forest plot`
+
+```{r}
+#install.packages("sjPlot")
+library(sjPlot)
+
+glm(data = dataset_sbp_small, obesity ~ DIS, family = "binomial") %>% 
+        plot_model() +
+        theme_classic()
+
+```
+
+```{r}
+plot_models(
+        glm(data = dataset_sbp_small, hypertension ~ DIS, family = "binomial"),
+        glm(data = dataset_sbp_small, Female ~ DIS, family = "binomial"),
+        glm(data = dataset_sbp_small, obesity ~ DIS, family = "binomial"),
+        grid = TRUE
+        ) +
+        theme_classic()
+
+```
+Logistic plot for binary predictors
+
+
+
+## Continuous variables
+
+
+
+
+```{r}
+dataset_sbp_small$FBS %>% summary
+
+pred1 <- data.frame(FBS = seq(from = 60,
+                                    to = 352, by = 2))
+
+pred1$predict <- predict(glm_obesity_fbs, newdata = pred1, type = "response")
+
+predict(glm_obesity_fbs, newdata = pred1, type = "response")
+predict(glm_obesity_fbs, data.frame(FBS = 0), type = "response")
+
+
+plot(dataset_sbp_small$FBS, as.numeric(dataset_sbp_small$obesity == 1),
+     ylab = "Obesity",
+     xlab = "FBS (mg/dL)") +
+lines(pred1$FBS, pred1$predict)
+
+
+```
+```{R}
+
+ggplot(dataset_sbp_small, aes(x = FBS, y = as.numeric(obesity) - 1)) +
+    geom_point() +
+    labs(y = "Probability of obesity", x = "FBS (mg/dL)") +
+        theme_classic()
+
+```
+
+
+
+
+## Binomial distribution
+
+Using binomial distribution, we can breifly know what the data is telling.
+
+Let's assume that we are flipping a coin.
+
+```{r}
+#install.packages("tidydice")
+library(tidydice)
+
+flip_coin(times = 1)
+
+```
+
+We can flip the coin 1 times, and the result will be
+
+
+```{r}
+
+flip_coin(times = 2) %>% .$success %>% (mean)
+flip_coin(times = 2) %>% .$success %>% (mean)
+
+```
+
+
+
+Sometimes we get 5 heads by 10, but many of trials will have results of 4 heads/3heads/6heads...etc. 
+
+
+
+We can simulate 1000 round of 10-flips as below.
+
+```{r}
+flip_coin(times = 10, rounds = 1000) %>% head()
+
+
+```
+
+
+```{r}
+
+
+flip_coin(times = 2, rounds = 10) %>%
+        group_by(round) %>%
+        summarise(probability = mean(success))
+
+c(1.0, 0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 1.0	) %>% hist(main = "Probability of getting heads when flipiing a coin\n(2 times X 10 rounds)", probability = T)
+
+
+```
+
+
+
+```{r}
+flip_coin(times = 10, rounds = 100000) %>%
+        group_by(round) %>%
+        summarise(probability = mean(success)) %>%
+        .$probability %>%
+        hist(., main = "Probability of getting heads when flipiing a coin\n(10 times X 100000 rounds)",
+             breaks = 10, xlim = c(0,1), probability = T)
+```
+
+
+```{r}
+flip_coin(times = 50, rounds = 100000) %>%
+        group_by(round) %>%
+        summarise(probability = mean(success)) %>%
+        .$probability %>%
+        hist(., main = "Probability of getting heads when flipiing a coin\n(50 times X 100000 rounds)", 
+             breaks = 25, probability = T, xlim = c(0,1))
+```
+
+
+```{r}
+flip_coin(times = 100, rounds = 10000) %>%
+        group_by(round) %>%
+        summarise(probability = mean(success)) %>%
+        .$probability %>%
+        hist(., main = "Probability of getting heads when flipiing a coin\n(100 times X 10000 rounds)", 
+             breaks = 50, probability = T, xlim = c(0,1))
+```
+```{r}
+flip_coin(times = 1000, rounds = 10000) %>%
+        group_by(round) %>%
+        summarise(probability = mean(success)) %>%
+        .$probability %>%
+        hist(., main = "Probability of getting heads when flipiing a coin\n(1000 times X 10000 rounds)", 
+             breaks = 20, xlim = c(0,1),
+             probability = T)
+```
+
+
+As continuous variable is So, we usually "Predict" the proportion of the sample.
+
+
+```{r}
+
+glm_obesity_fbs_small <- glm(data = dataset_sbp, obesity ~ FBS, family = "binomial")
+
+
+ilink <- family(glm_obesity_fbs_small)$linkinv
+
+pred1 <- with(dataset_sbp_small,
+           data.frame(FBS = seq(min(FBS), max(FBS),
+                                       length = 100)))
+
+pred1 <- cbind(pred1, predict(glm_obesity_fbs_small, pred1, type = "link", se.fit = TRUE)[1:2])
+
+pred1 <- transform(pred1, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+
+ggplot(dataset_sbp_small, aes(x = FBS, y = as.numeric(obesity) - 1)) +
+    geom_point()
+        theme_classic() +
+    labs(y = "Probability of obesity", x = "FBS (mg/dL)")
+
+ggplot(dataset_sbp_small, aes(x = FBS, y = as.numeric(obesity) - 1)) +
+    geom_point() +
+    geom_line(data = pred1, aes(y = Fitted, x = FBS)) + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = FBS),
+    fill = "steelblue2", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    labs(y = "Probability of obesity", x = "FBS (mg/dL)")
+
+ggplot(dataset_sbp_small, aes(x = FBS, y = as.numeric(obesity) - 1)) +
+    #geom_point() +
+    geom_line(data = pred1, aes(y = Fitted, x = FBS)) + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = FBS),
+    fill = "steelblue2", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    labs(y = "Probability of obesity", x = "FBS (mg/dL)")
+
+```
+
+
+
+
+```{r}
+
+glm_hypertension_sbp <- glm(data = dataset_sbp_small, hypertension ~ SBP, family = "binomial")
+
+
+ilink <- family(glm_hypertension_sbp)$linkinv
+
+pred1 <- with(dataset_sbp_small,
+           data.frame(SBP = seq(min(SBP), max(SBP),
+                                       length = 100)))
+
+pred1 <- cbind(pred1, predict(glm_hypertension_sbp, pred1, type = "link", se.fit = TRUE)[1:2])
+
+pred1 <- transform(pred1, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+
+ggplot(dataset_sbp_small, aes(x = SBP, y = as.numeric(hypertension)-1)) +
+    geom_point() +
+        theme_classic() +
+    labs(y = "Hypretension", x = "SBP (mmHg)")
+
+ggplot(dataset_sbp_small, aes(x = SBP, y = as.numeric(hypertension)-1)) +
+    geom_point() +
+    geom_line(data = pred1, aes(y = Fitted, x = SBP)) + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "steelblue2", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    labs(y = "Hypretension", x = "SBP (mmHg)")
+
+ggplot(dataset_sbp_small, aes(x = SBP, y = as.numeric(hypertension)-1)) +
+    #geom_point() +
+    geom_line(data = pred1, aes(y = Fitted, x = SBP)) + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "steelblue2", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    labs(y = "Hypretension", x = "SBP (mmHg)")
+
+```
+
+
+
+### Predicted porportion by groups
+
+```{r}
+
+dataset_sbp_small_dis1 <- dataset_sbp_small %>%
+                                    subset(., as.numeric(.$DIS) == 1)
+glm_hypertension_sbp <- glm(data = dataset_sbp_small_dis1, 
+                            hypertension ~ SBP, family = "binomial")
+
+ilink <- family(glm_hypertension_sbp)$linkinv
+pred1 <- with(dataset_sbp_small_dis1,
+           data.frame(SBP = seq(min(SBP), max(SBP),
+                                       length = 100)))
+pred1 <- cbind(pred1, predict(glm_hypertension_sbp, pred1, type = "link", se.fit = TRUE)[1:2])
+pred1 <- transform(pred1, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+dataset_sbp_small_dis2 <- dataset_sbp_small %>%
+                                    subset(., as.numeric(.$DIS) == 2)
+glm_hypertension_sbp <- glm(data = dataset_sbp_small_dis2, 
+                            hypertension ~ SBP, family = "binomial")
+
+ilink <- family(glm_hypertension_sbp)$linkinv
+pred2 <- with(dataset_sbp_small_dis2,
+           data.frame(SBP = seq(min(SBP), max(SBP),
+                                       length = 100)))
+pred2 <- cbind(pred2, predict(glm_hypertension_sbp, pred2, type = "link", se.fit = TRUE)[1:2])
+pred2 <- transform(pred2, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+
+dataset_sbp_small_dis3 <- dataset_sbp_small %>%
+                                    subset(., as.numeric(.$DIS) == 3)
+glm_hypertension_sbp <- glm(data = dataset_sbp_small_dis3, 
+                            hypertension ~ SBP, family = "binomial")
+
+ilink <- family(glm_hypertension_sbp)$linkinv
+pred3 <- with(dataset_sbp_small_dis3,
+           data.frame(SBP = seq(min(SBP), max(SBP),
+                                       length = 100)))
+pred3 <- cbind(pred3, predict(glm_hypertension_sbp, pred3, type = "link", se.fit = TRUE)[1:2])
+pred3 <- transform(pred3, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+
+
+
+dataset_sbp_small_dis4 <- dataset_sbp_small %>%
+                                    subset(., as.numeric(.$DIS) == 4)
+glm_hypertension_sbp <- glm(data = dataset_sbp_small_dis4, 
+                            hypertension ~ SBP, family = "binomial")
+
+ilink <- family(glm_hypertension_sbp)$linkinv
+pred4 <- with(dataset_sbp_small_dis4,
+           data.frame(SBP = seq(min(SBP), max(SBP),
+                                       length = 100)))
+pred4 <- cbind(pred4, predict(glm_hypertension_sbp, pred4, type = "link", se.fit = TRUE)[1:2])
+pred4 <- transform(pred4, Fitted = ilink(fit), Upper = ilink(fit + (2 * se.fit)),
+                Lower = ilink(fit - (2 * se.fit)))
+
+
+
+ggplot(dataset_sbp_small, aes(x = SBP, y = as.numeric(hypertension)-1)) +
+    #geom_point() +
+    geom_line(data = pred1, aes(y = Fitted, x = SBP), col = "blue") + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "steelblue2", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+        geom_line(data = pred2, aes(y = Fitted, x = SBP), col = "red") + 
+    geom_ribbon(data = pred1, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "pink", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    
+        geom_line(data = pred3, aes(y = Fitted, x = SBP), col = "green") + 
+    geom_ribbon(data = pred3, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "lightgreen", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic() +
+    
+        geom_line(data = pred4, aes(y = Fitted, x = SBP), col = "brown") + 
+    geom_ribbon(data = pred4, aes(ymin = Lower, ymax = Upper, x = SBP),
+    fill = "yellow", alpha = 0.2, inherit.aes = FALSE) +
+        theme_classic()  + 
+    labs(y = "Hypretension", x = "SBP (mmHg)")
+
+```
+
+
+# How to use this logistic regression in prediction?
+
+## Types of errors
+
+
+```{R}
+
+ggplot(dataset_sbp_small, aes(x = SBP)) +
+    geom_histogram() +
+    labs(y = "Hypertension", x = "SBP (mmHg)") +
+    theme_classic() +
+        facet_wrap(~hypertension, ncol = 1)
+
+```
+
+```{R}
+
+dataset_sbp_small$pred_hypertension <- 
+        ifelse(glm(data = dataset_sbp_small, hypertension ~ SBP, family = "binomial") %>% predict(., type = "link") > 0, 1, 0)
+
+```
+
+
+```{R}
+
+table(dataset_sbp_small$hypertension, dataset_sbp_small$pred_hypertension)
+
+```
+
+
+```{R}
+
+ggplot(dataset_sbp_small, aes(x = SBP, y = hypertension, col = as.factor(pred_hypertension))) +
+               geom_point() +
+        theme_classic() +
+        guides(col=guide_legend(title="Prediction"))
+
+```
+
+```{R}
+?roc
+roc(dataset_sbp_small$hypertension,  dataset_sbp_small$pred_hypertensio, plot = TRUE,
+               print.auc = TRUE) +
+        xlim(c(1,0))
+
+```
+
+
+
+## Separating dataset into train and test sets
+
+```{r}
+set.seed(1)
+default_idx = sample(nrow(dataset_sbp), 5000)
+default_trn = dataset_sbp[default_idx, ]
+default_tst = dataset_sbp[-default_idx, ]
+
+```
+
+
+```{R}
+#install.packages("pROC")
+library(pROC)
+
+model_train <- glm(data = default_trn, hypertension ~ SBP, family = "binomial")
+
+test_prob = predict(model_train,
+                    newdata = default_tst,
+                    type = "response")
+
+test_roc = roc(default_tst$hypertension ~ test_prob,
+               plot = TRUE,
+               print.auc = TRUE) +
+        xlim(c(1,0))
+
+```
+
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
