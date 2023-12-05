@@ -1,7 +1,7 @@
 ---
-title: "COD_week13_2_MGK_BTE3207"
+title: "COD_week14_1_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-11-24"
+date: "2023-11-28"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -30,12 +30,12 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-<<<<<<< HEAD
-path_working <- "/Users/minsikkim/Dropbox/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-=======
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
->>>>>>> d2ac6b2aea59873e5a54254ff9595b2095241036
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+               "/Volumes/MacMini Drive/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/", 
+               "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/")
+path_library <- 
+        "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c("tidyverse", "pacman", "yaml")
 
 
@@ -101,143 +101,175 @@ FUN.LineZero.Report()
 
 This lecture will practice running 
 
-1. Plackett-Burman Design (PBD)
+1. running regerssion analysis to binary outcomes (logistic regression)
 
 and
 
-2. Response surface method (RSM)
-
+2. Multiple hypothesis testing
 
 # Before begin..
 
-Let's install packages.
+Let's load the data
 
 ```{r}
-install.packages("daewr")
 
-library(daewr)
+dataset_sbp <- read.csv("dataset/sbp_dataset_korea_2013-2014.csv")
 
 ```
-
-`PBDes` function creates the experimental design of the PBD.
-randomize = T will generate a matrix with mixed orders.
 
 
 ```{r}
 
-daewr::PBDes(nfactors = 11, nruns = 12)
+dataset_sbp$BTH_G %>% hist
+
+```
+Where, each level of BTH_G means
+1: 20 to 24 years old
+2: 25 to 26 years old
+...
+26: is 73 to 74
+27: 75 years old or older.
+
+# Data manipulation
+
+from this dataset, we can calulate 
+
+## Hypertension
+
+```{r}
+dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
+                                           dataset_sbp$DBP > 80,
+                                   1,
+                                   0) %>%
+        as.factor
 
 ```
 
 
-After setting your `higher level` and `lower level` based on your intuition, you can run a experiment with 12 experimental groups, and get the result out of the data.
 
-analyiss of PBD outcome
+## Obesity
 
-You can run a miultiple linear regression that is containing all the data!
+```{r}
+dataset_sbp$obesity <- ifelse(dataset_sbp$BMI > 25,
+                                   1,
+                                   0) %>% 
+        as.factor()
+```
+
+
+
+
+
+## Female (re-level)
+
+```{r}
+dataset_sbp$Female <- ifelse(dataset_sbp$SEX == 2, 
+                          1,
+                          0) %>%
+        as.factor
+```
+
+
+
+
+## DIS (re-level)
+
+```{r}
+dataset_sbp$DIS <- factor(dataset_sbp$DIS, 
+                          levels = c(1,2,3,4),
+                          labels = c("Hypertension and diabetes",
+                                     "Hypertension",
+                                     "Diabetes",
+                                     "No history"))
+```
 
 
 ```{r}
-library(tidyverse)
-<<<<<<< HEAD
-read.csv("/Volumes/MacMini Drive/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv") %>%
-=======
-read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv") %>%
->>>>>>> d2ac6b2aea59873e5a54254ff9595b2095241036
-        names 
+set.seed(1)
+
+dataset_sbp_small <- subset(dataset_sbp,
+                        row.names(dataset_sbp)%in% sample(x = 1:1000000, size = 1000))
+
 ```
+
+# Generating table
 
 ```{r}
- lm(Biomass ~ Glucose + YE + KH2PO4 + K2HPO4 + MgSO4 + CaCl2 + FeSO4 + Fructose + NH4Cl + TM + Vitamin,
-<<<<<<< HEAD
-    data = read.csv("/Volumes/MacMini Drive/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv")) %>% summary
-=======
-    data = read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv")) %>% summary
->>>>>>> d2ac6b2aea59873e5a54254ff9595b2095241036
+table(dataset_sbp$obesity,dataset_sbp$Female)
 ```
 
-This is your Plackett-Burman result.
-
-
-## RSM
 
 
 ```{r}
-install.packages("rsm")
-library(rsm)
+data <- data.frame(yearly_veg = c(56, 45, 40, 39, 29, 11, 10, 8, 5, 3, 2),
+                   heartdisease = c(1,1,1,1,0,1,0,0,0,0,0))
+
+data2 <- data.frame(yearly_veg = c(55, 40, 40, 38, 37, 21, 19, 10, 4, 2, 2),
+                   heartdisease = c(1,1,1,1,0,1,1,0,0,0,0))
+
+
+model <- glm(data = data, heartdisease ~ yearly_veg, family = "binomial")
+
+model %>% summary
+
+data2$prediction <- ifelse(predict(model, newdata = data2, type = "response") > 0.5,
+                           1, 0)
+
+
+view(data2)
+        
 
 ```
-
-
-using `ccd` function, you can generate a experimental design that can be used for RSM experiment and analysis
-
-```{R}
-
-ccd (3)
-
-SOdes2 <- ccd (2, n0 = c(4,6), alpha = "rotatable", inscribed = F)
-
-SOdes2
-
-```
-
-
-With `coding` argument, you can set the levels of your data into actual values
-```{r}
-SOdes2 <- ccd (3, n0 = c(4,6), alpha = "rotatable", inscribed = F,
-               coding = list (
-                x1 ~ (Glucose - 50)/10, 
-                x2 ~ (NaNO3 - 5)/2, 
-                x3 ~ (K2HPO4 - 2)/1)
-)
-
-SOdes2
-```
-
-# Analysis of RSM
 
 
 ```{r}
+#install.packages("pROC")
+library(pROC)
 
-CR1.rsm <- rsm(Yield ~ Block + SO(Time, Temp), data = ChemReact)
+roc(data2$heartdisease,  data2$prediction, plot = TRUE,
+               print.auc = TRUE)
 
-summary(CR1.rsm)
+
+roc(data2$heartdisease,  c(0,0,0,0,0,1,1,0,1,0,0), plot = TRUE,
+               print.auc = TRUE)
+
+
+roc(data2$heartdisease,  data2$heartdisease, plot = TRUE,
+               print.auc = TRUE)
+
+
 
 ```
-
-Here, besides the interaction term, all the term is significant. 
-
-Anova here tests the "lack of fit" which tests the variance not explaned by model but by the error (from the repeated experiments). This term's p-values should be greater than effect of others!
-
-
-To draw contour, use `contour` function
 
 ```{r}
 
-contour(CR1.rsm, ~ Time + Temp, image = TRUE, at = summary(CR1.rsm)$canonical$xs)
+
+roc(data2$heartdisease,  c(0,0,0,0,0,1,1,0,1,0,0), plot = TRUE,
+               print.auc = TRUE)
+
+
+roc(data2$heartdisease,  data2$heartdisease, plot = TRUE,
+               print.auc = TRUE)
 
 
 ```
 
-To draw 3d plot, use `persp` function
 
 ```{r}
+#install.packages("pROC")
+pbd <- daewr::PBDes(nruns = 12, nfactors = 5)
+names(pbd) <- c("YE", "Tryptone", "Glycerol", "PBS", "KH2PO4")
 
-persp(CR1.rsm, 
-      Time ~ Temp, #plot xs
-      col=rainbow(50),
-      xlabs = c(expression("Time (min)", "Temperature (°C)")), # axis labels
-      theta=30, 
-      phi=30, r = 120, d=120, 
-      border = NULL, 
-      ltheta = 0, 
-      lphi = 0, 
-              shade = 0.75, zlab="Yield", col.axis=37, font.lab=2, col.lab=35,
-              contour=("colors"))
+pbd$DCW <- c(3.15, 2.12, 3.77, 2.54, 1.23, 2.2, 2.3, 6.12, 5.79, 4.12, 4.22, 0.08)
+view(pbd)
+pbd_model <- lm (data = pbd, DCW ~ YE + Tryptone + Glycerol + PBS + KH2PO4)
 
 
+summary(pbd_model)$coefficients[,1] + 2.447 * summary(pbd_model)$coefficients[,2]
+summary(pbd_model)$coefficients[,1] + 3.97 * summary(pbd_model)$coefficients[,2]
+?confint
+pbd_model %>% anova
 ```
-
 
 # Bibliography
 

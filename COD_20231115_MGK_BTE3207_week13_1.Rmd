@@ -601,6 +601,7 @@ sbp_dbp_fit_mlr %>% summary
 Can run the same thing with mlr 
 
 ```{r}
+
 par(mfrow=c(2,2))
 plot(sbp_dbp_fit_mlr)
 par(mfrow=c(1,1))
@@ -609,7 +610,7 @@ par(mfrow=c(1,1))
 To make `adjusted plot`, You can choose the data as below. 
 
 ```{r}
-
+sbp_dbp_fit_mlr
 sbp_dbp_fit_mlr$coefficients["(Intercept)"][[1]]
 sbp_dbp_fit_mlr$coefficients["DBP"][[1]]
 
@@ -655,6 +656,7 @@ sbp_dbp_fit_int <- lm(data = dataset_sbp_small, SBP ~ DBP + BMI + SEX * DIS)
 Running anova
 
 ```{r}
+
 sbp_dbp_fit_int %>% anova
 ```
 
@@ -691,8 +693,6 @@ Using the adjusted coefficients of the linear model, you can draw linear model.
 In ggplot package, geom_smooth(method = "lm") will generate linear regression of each data groups at once!
 
 ```{r}
-
-
 ggplot2::ggplot(dataset_sbp_small, aes(y = SBP, x = DBP, col = DIS)) +
         geom_point() +
         geom_smooth(method = "lm")
@@ -714,7 +714,7 @@ ggplot2::ggplot(imm10_data, aes(y = math, x = homework, col = as.factor(schnum))
 ## Stratification
 
 
-### Manucal
+### Manual
 
 Data can be splited using following filter() function
 
