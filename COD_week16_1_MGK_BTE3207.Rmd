@@ -1,0 +1,303 @@
+---
+title: "COD_week16_1_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2023-12-14"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+        
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+               "/Volumes/MacMini Drive/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/", 
+               "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/")
+path_library <- 
+        "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("tidyverse", "pacman", "yaml")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 16-1"
+author: "Minsik Kim"
+date: "2032.12.14"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230920"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml", "lmerTest", "vegan", "phyloseq", "ggplot"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+# Agenda
+
+This lecture will practice running 
+
+Multiple hypothesis testing correction
+
+# What is multiple hypothesis testing?
+
+```{r}
+
+
+random_data <- data.frame(random_1 = sample(1:100, 10),
+                          random_2 = sample(1:100, 10))
+
+
+lm(data = random_data, random_1 ~ random_2)
+
+
+```
+Of course, two random data sets are not having significant correlation.
+
+However, what if we have many many many random dataset?
+
+```{r}
+set.seed(1)
+random_1000 <- replicate(1000, sample(1:100, 10)) %>%
+        data.frame() %>%
+        rownames_to_column("number")
+
+
+
+head(random_1000)
+
+```
+
+```{r}
+
+data_long <- gather(random_1000, sample, data, X1:X1000, factor_key=TRUE)
+
+data_long
+
+```
+
+```{r}
+
+test_lm <- lm(data = data_long, data ~ as.factor(sample)) 
+
+test_lm %>% summary
+
+```
+
+```{r}
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        hist
+        
+
+        
+        
+
+```
+Some random data got significant..?
+
+THis trend gets worse with normally distributed datasets.
+
+```{r}
+set.seed(10)
+random_1000 <- replicate(1000, rnorm(10, mean = 0, sd = 1)) %>%
+        data.frame() %>%
+        rownames_to_column("number")
+
+
+
+head(random_1000)
+
+```
+
+```{r}
+
+data_long <- gather(random_1000, sample, data, X1:X1000, factor_key=TRUE)
+
+data_long
+
+```
+
+```{r}
+
+test_lm <- lm(data = data_long, data ~ as.factor(sample)) 
+
+test_lm %>% summary
+
+```
+
+```{r}
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        hist
+        
+```
+
+
+This is the caveat of having big data. with random dataset, and having multiple `hypothesis testing`, you will find `something` that is statistically significant. 
+
+# Multipel hypothesis testing correciton methods
+
+
+
+## Benjamini-Hochberg
+
+FDR (False discovery rate)-based adjusting.
+
+Assuming that the FDR is 0.1 (10% of significnat association is false-positives).
+
+```{r}
+
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        p.adjust(., method="BH") %>%
+        hist
+
+```
+
+
+
+## Bonferroni
+
+Just multiplying `p-values` with `number of tests`!
+
+In this case, only p-value with lower than 0.00005 is statistically significant
+
+```{r}
+
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        p.adjust(., method="bonferroni") %>%
+        hist
+
+```
+
+# qvalue package
+
+`qvalue` package uses similar approach to BH correction but with more difficult assumptions.......This package takes a list of p-values resulting from the simultaneous testing of many hypotheses and estimates their q-values and local FDR values. The q-value of a test measures the proportion of false positives incurred (called the false discovery rate) when that particular test is called significant. The local FDR measures the posterior probability the null hypothesis is true given the test's p-value. Various plots are automatically generated, allowing one to make sensible significance cut-offs.
+
+
+```{r}
+
+#if (!require("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+
+#BiocManager::install("qvalue")
+
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        qvalue::qvalue(.) %>% 
+        hist
+
+
+
+```
+```{r}
+summary(test_lm) %>%
+        .$coef %>%
+        .[,4] %>%
+        qvalue::qvalue(.) %>% 
+        .$qvalues %>% 
+        hist
+
+```
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
