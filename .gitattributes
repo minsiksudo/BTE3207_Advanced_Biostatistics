@@ -1,0 +1,10 @@
+# Recognize R Markdown as R, not HTML
+*.Rmd linguist-language=R
+*.rmd linguist-language=R
+
+
+# Ignore HTML files in language statistics
+*.html linguist-vendored
+
+# Ignore Markdown files in language statistics
+*.md linguist-vendored
