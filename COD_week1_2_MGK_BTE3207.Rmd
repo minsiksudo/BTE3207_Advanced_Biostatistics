@@ -3,18 +3,29 @@ title: "COD_week1_2_MGK_BTE3207"
 author: "Minsik Kim"
 date: "2024-09-02"
 output:
-        rmdformats::downcute:
-        downcute_theme: "chaos"
-code_folding: show
-fig_width: 6
-fig_height: 6
-df_print: paged
-editor_options: 
-        chunk_output_type: inline
-markdown: 
-        wrap: 72
+  rmdformats::downcute:
+    downcute_theme: "chaos"
+  code_folding: show
+  fig_width: 6
+  fig_height: 6
+  df_print: paged
+  editor_options:
+    chunk_output_type: inline
+  markdown:
+    wrap: 72
 ---
-        
+
+<style>
+  /* Default light mode styles */
+  .reactable {
+    background-color: #ffffff !important; /* Light background */
+    color: #000000 !important;            /* Dark text */
+    border-color: #cccccc !important;     /* Light border */
+  }
+
+</style>
+
+
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
 #===============================================================================
 #BTC.LineZero.Header.1.1.0
