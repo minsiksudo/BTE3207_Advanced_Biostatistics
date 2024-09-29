@@ -1,7 +1,7 @@
 ---
 title: "COD_week5_1_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-09-25"
+date: "2024-09-30"
 output:
 rmdformats::downcute:
 downcute_theme: "chaos"
@@ -28,16 +28,28 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("tidyverse", "pacman", "yaml", "ggplot2", "tidyverse", "swirl")
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      ""))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library")
+
+
+
+str_libraries <- c("tidyverse", "reactable", "yaml", "pacman")
 
 
 YAML_header <-
         '---
-title: "BTE3207 week 4-2"
+title: "BTE3207 week 5-1"
 author: "Minsik Kim"
-date: "2032.09.20"
+date: "2024-09-30"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -93,7 +105,7 @@ FUN.LineZero.Report()
 Let's load the SBP dataset.
 
 ```{r}
-dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
 
 head(dataset_sbp)
 
