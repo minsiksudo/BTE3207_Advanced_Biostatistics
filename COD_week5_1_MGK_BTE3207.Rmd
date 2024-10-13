@@ -3,8 +3,8 @@ title: "COD_week5_1_MGK_BTE3207"
 author: "Minsik Kim"
 date: "2024-09-30"
 output:
-rmdformats::downcute:
-downcute_theme: "chaos"
+        rmdformats::downcute:
+        downcute_theme: "chaos"
 code_folding: show
 fig_width: 6
 fig_height: 6
@@ -34,12 +34,11 @@ path_working <-
                "/mnt/4T_samsung/Dropbox/",
                ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
                       "/Volumes/macdrive/Dropbox/", 
-                      ""))
+                      "/Users/minsikkim/Dropbox (Personal)/"))
 path_library <- 
         ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
                "/home/bagel/R_lib/",
                "/Library/Frameworks/R.framework/Resources/library")
-
 
 
 str_libraries <- c("tidyverse", "reactable", "yaml", "pacman")
@@ -131,7 +130,7 @@ dataset_sbp$SBP %>%
         data.frame() %>% 
         colMeans() %>%
         hist(100,
-             main = "Distribution of 5000 sample mean p-hat of hypertation from 1M subjects.\nEach sample N = 150") +
+             main = "Distribution of total sample mean p-hat of hypertation from 1M subjects.\nEach sample N = 150") +
         stat_function(fun = dnorm,
                       args = list(mean = mean(dataset_sbp$SBP),
                                   sd = sd(dataset_sbp$SBP)))
@@ -400,11 +399,21 @@ Here is an example how to calculate the CIs for p-hat in R.
 
 ```{r}
 
+
+
 install.packages("interpretCI")
 library(interpretCI)
+
+#Normal approximation (2 sd)
 x=propCI(n = 20, p = 0.15, alpha = 0.05)
 x
 
+#Normal approximation 
+x=propCI(n = 20, p = 0.15, alpha = 0.05, alternative =  "wald")
+x
+
+#exact method - Clopper-Pearson interval.
+binom.test(x = 20 * 0.15, n = 20, conf.level = 0.95)
 
 ```
 
