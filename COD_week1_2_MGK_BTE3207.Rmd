@@ -240,6 +240,7 @@ Here is an example using systolic blood pressure (SBP) data from [NHISS](https:/
 
 dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
 
+
 dataset_sbp %>%
         reactable::reactable(sortable = T)
 
@@ -250,6 +251,20 @@ Here, the `file = "Inha/5_Lectures/Advanced_biostatistics/datasets/sbp_dataset/s
 When working with data in R, it's often necessary to load data from your computer instead of typing everything manually. The most common file formats for data are `.csv` (Comma-Separated Values) and `.xlsx` (Excel files). 
 
 To load a `.csv` file, we use the `read.csv()` function. However, to load the file correctly, you need to know the **file path**, which tells R where to find the file on your computer.
+
+## Meanwhile, actually you can download the files at your current working directory with a valid URL for the file as well. 
+
+```{r}
+url_link <- "https://raw.githubusercontent.com/minsiksudo/BTE3207_Advanced_Biostatistics/refs/heads/main/dataset/sbp_dataset_korea_2013-2014.csv"
+
+download.file(url = url_link, 
+              destfile = "sbp_dataset_korea_2013-2014.csv") # the name that you want to store the linked file at your computer. 
+
+list.files() # This shows all the files in your current working directory
+
+dataset_sbp <- read.csv("sbp_dataset_korea_2013-2014.csv") # as the file is in your current folder, you don't need to specify the path.
+
+```
 
 ### Understanding File Paths
 
@@ -262,8 +277,8 @@ A file path is like a map that tells your computer where to find a file. There a
 
 - **Mac/Linux Users**: File paths use forward slashes `/` to separate directories.
   - Example: `/Users/username/Documents/data.csv`
-- **Windows Users**: File paths use backslashes `\`, but in R, you should use forward slashes `/` or double backslashes `\\`.
-  - Example: `C:/Users/username/Documents/data.csv` or `C:\\Users\\username\\Documents\\data.csv`
+- **Windows Users**: File paths use backslashes `\`, but in the unicode of Korean Windows operating system, it is translated KRW sign, therefore, you should use `\\` (double backslashes).
+  - Example: `C:/Users/username/Documents/data.csv` --> change to `C:\\Users\\username\\Documents\\data.csv`
 
 ### Using the Tab Key to Navigate
 
