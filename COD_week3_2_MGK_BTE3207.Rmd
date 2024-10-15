@@ -1,0 +1,567 @@
+---
+title: "COD_week3_2_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2024-09-15"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+
+
+# Introduction
+
+In this lecture, we will explore basic R programming concepts and data manipulation using the tidyverse package. This includes variable assignment, vector operations, indexing, data frame manipulation, and data summarization.
+
+
+# Setup
+
+First, we’ll set up our R environment by loading necessary libraries and setting the working directory.
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library")
+
+
+str_libraries <- c("tidyverse", "reactable", "yaml", "pacman")
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 3-2"
+author: "Minsik Kim"
+date: "2024.09.15"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20240915"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+Explanation:
+
+	•	Global Options: We suppress messages and warnings in the output for cleaner presentation.
+	•	Working Directory: Adjust path_working to match your system’s directory structure.
+	•	Package Management: We use the pacman package to load and manage other packages efficiently.
+	•	Reproducibility: Setting a seed ensures that random operations produce the same results every time.
+
+Environment Report
+
+Let’s output a report of the current R environment to verify our setup.
+
+	•	R Version: Displays the current R version.
+	•	Loaded Packages: Lists all packages currently loaded in the session.
+	•	Session Information: Provides detailed information about the R session for debugging purposes.
+
+
+# Before begin..
+
+
+
+
+*Basics of R*
+
+## Get current pathway of R working environment
+
+```{r}
+getwd()
+```
+
+
+## Listing files in current pathway
+
+```{r}
+list.files()
+```
+
+## Changing directory
+
+Use `tab` for navigating folders!
+
+```{r}
+list.files("Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/dataset/")
+
+setwd("Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/dataset/")
+
+getwd()
+```
+
+Now, you are in dataset folder!
+
+## Going back to original folder
+
+To go back to the upper path,
+
+```{r}
+setwd("..")
+
+getwd()
+```
+
+Now you came back to the original working directory.
+
+
+# Logical values...having logical values.
+
+```{r}
+a = 1
+
+a
+
+```
+
+`=` does the same thing as `<-`. 
+
+To test if the thing are same, R uses `==`.
+
+
+```{r}
+a == 1
+
+```
+
+as we inserted `a <- 1` in the previous code chunk, this test results in `TRUE`
+
+```{r}
+"a" == 1
+
+```
+This test will test whether a character, `"a"`, is the same with a numeric value `1`. As they are not the same, it returns `FALSE`
+
+Here, `TRUE` and `FALSE` results are , and they are one type of **binary variable**. It works for longer vectors or variables as well.
+
+```{r}
+
+c(1, 2, 3, 4, 5) == c(1, 2, 2, 4, 5)
+
+c(1, 2, 3, 4, 5) == 1
+
+```
+
+And it results in a vector of all the logical tests. Using this, we can filter data easily!
+
+
+# Howe to select values
+
+To select values from vector, we use `[]` (square brackets).
+
+```{r}
+a <- c(1, 2, 3)
+
+a[1]
+
+```
+
+`a[1]` will result in the first data element in this vector.
+
+It is slightly different with some data with names.
+
+```{r}
+
+names(a) <- c("first", "second", "third")
+
+str(a)
+
+```
+now the vector `a` is named numeric vector.
+
+In this case,
+
+```{r}
+a[1] 
+
+```
+
+The results will be the name and the value!
+
+This sometimes causes some problem when calculating data.
+
+In that case, we need to use double brackets`[[]]`
+
+```{r}
+a[[1]]
+```
+
+
+By the way, selecting multiple numbers can be done with colons`:`.
+
+```{r}
+1:10
+
+5:20
+```
+
+As it has output of vector (multiple elements), both below codes will work the same way
+
+```{r}
+
+a[c(1, 2, 3)]
+
+a[1:3]
+
+```
+
+For selecting data in data frames, it works the same way but it separates the rows and columns using comma. Here is one example.
+
+```{r}
+dataframe_example <- data.frame(Joe = c(1:1000),
+                                Trump = sample(1:1000, 100),
+                                Obama = sample(1:1000, 100),
+                                George = sample(1:1000, 100)
+                                )
+
+head(dataframe_example)
+```
+
+This is a data frame, meaning nothing (it just has 100 numbers randomly selected from a numbers between 1 to 1000), besides Biden. It has ordered numbers from 1 to 100.
+
+
+To select some data, we use numbers or columns again. But we separate inputs with a comma `,`.
+
+Selecting 1st row and 1st cloumn
+
+```{r}
+
+dataframe_example[1,1]
+
+
+
+```
+
+Selecting multiple rows in column 1
+
+```{r}
+
+dataframe_example[1:10, 1]
+
+
+
+```
+
+
+Selecting multiple rows and columns
+
+```{r}
+dataframe_example[3:5, 1:2]
+```
+
+# How to install more functions in R
+
+We use `install.packages()` function to install The CRAN (Comprehensive R Archive Network) server.
+
+
+```{r}
+install.packages("tidyverse")
+```
+
+However, the package you just installed, is on your computer (somewhere in a folder called libraries), but they are not `loaded` to R program (simply saying, you did not open them). To use the installed packages, you need to use function `library()`
+
+```{r}
+library(tidyverse)
+```
+
+Now you can use `tidyverse` package!
+
+`tidyverse` package is the one helps you writing code / summarizing results.
+
+When you learn how to install new packages, you can navigate functions in that package using two colons (`::`).
+
+```{r}
+tidyverse::tidyverse_conflicts()
+```
+
+As we installed a new package, there could be a `conflits` in functions. `tidyverse_conflicts()` shows the list of those conflicts. 
+
+As developers are doing things by their own, and CRAN does not have a system controlling the names of the newly developed functions. That means, a new function from a package that you installed, can be overlapped with other functions from other packages!
+
+
+```{r}
+dataset_sbp <- read.csv(file = "Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv") 
+
+head(dplyr::filter(dataset_sbp, SEX == 1))
+
+head(stats::filter(dataset_sbp$SEX, rep(1,3)))
+```
+`dplyr::filter()` will filter out the data based on given condition, `SEX == 1`.
+
+(doing the same thing as `subset()`)
+
+However, `stats::filter()` (which is the basic package comes with R) does different thing. It applies linear filtering to a univariate time series or to each series separately of a multivariate time series.
+
+The best practice is to note all the function names with `::`. But generally, you don't have to do it as it is not that common problem.
+
+# Basic tidyverse
+
+Tidy verse helps you writing code efficiently. But how?
+
+
+Let's see this example. We want to filter sample, based on some condition. And we have multiple conditions.
+
+```{r}
+
+head(filter(dataset_sbp, SEX == 1 & SBP > 120))
+
+```
+
+This function filtered based on multiple conditions, when `SEX == 1` and `SBP > 120`. But how are we going to do some imputation, and then filter out based on some conditions?
+
+
+```{r}
+
+head(filter(filter(filter(dataset_sbp, SEX == 1), SBP > 120), FBS > 110))
+
+```
+
+This function filtered based on multiple conditions, when `SEX == 1` and `SBP > 120`. Plus, it has `head` function outside again. 
+
+
+It can be done with this code and it does the same thing.
+
+```{r}
+
+dataset_sbp %>%
+        filter(SEX == 1) %>%
+        filter(SBP > 120) %>%
+        filter(FBS > 110) %>%
+        head()
+
+```
+
+
+But how are we going to do some imputation, and then filter out based on some conditions?
+
+
+Let's see this example again.
+
+We can try adding multiple lines of code to do this. Let's say we are interested in the difference between SBP and DBP. And then we want to categorize them with genders. And then, we want to filter out the data based on their quantile.
+
+```{r}
+
+dataset_sbp$Diff_SBP_DBP <- dataset_sbp$SBP - dataset_sbp$DBP
+
+dataset_sbp_male <- filter(dataset_sbp, SEX == 1)
+dataset_sbp_female <- filter(dataset_sbp, SEX == 2)
+
+avg_male <- mean(dataset_sbp_male$Diff_SBP_DBP)
+
+avg_female <- mean(dataset_sbp_female$Diff_SBP_DBP)
+
+sd_male <- sd(dataset_sbp_male$Diff_SBP_DBP)
+
+sd_female <- sd(dataset_sbp_female$Diff_SBP_DBP)
+
+data.frame(SEX = c(1, 2),
+           aberage_by_group = c(avg_male, avg_female),
+           sd_by_group = c(sd_male, sd_female))
+
+```
+
+We did it! However, the codes are quite nasty, and we have generated unnecessary intermediate data frames as well. Isn't there a smarter way?
+
+# Piping
+
+The good news is, `tidyverse::` package has a great feature called *piping*. In basic R, if we do not assign values with `<-`, the computer will just show the result and it won't store the output. 
+
+Piping helps employing that output temprarilly, using `%>%`
+
+```{r}
+dataset_sbp %>% head()
+
+```
+
+Selection of piped data in tidyverse can be done with dot `.`.
+
+```{r}
+dataset_sbp %>% .$SEX %>% head()
+
+```
+
+
+The data will be moved the the next function, and will be employed for calculation.
+
+```{r}
+# Calculate the difference between SBP and DBP
+dataset_sbp <- dataset_sbp %>%
+  mutate(Diff_SBP_DBP = SBP - DBP)
+
+# View the first few rows
+head(dataset_sbp)
+
+
+```
+
+See? Here, `mutate()` is a function for calculating new variable in `tidyverse`.
+
+Let's do the same thing with tidyverse.
+
+```{r}
+
+# Calculate average and standard deviation of Diff_SBP_DBP by SEX
+summary_by_sex <- dataset_sbp %>%
+  group_by(SEX) %>%
+  summarise(
+    average_diff = mean(Diff_SBP_DBP, na.rm = TRUE),
+    sd_diff = sd(Diff_SBP_DBP, na.rm = TRUE)
+  )
+
+# View the summary
+print(summary_by_sex)
+
+
+
+```
+
+Grouping by Multiple Variables
+
+Explanation:
+
+	•	Multiple Grouping Variables: Allows for more granular analysis.
+	•	Nested Groups: The data is first grouped by SEX, then by DIS within each SEX.
+
+
+
+```{r}
+# Calculate average and standard deviation by SEX and DIS
+summary_by_sex_dis <- dataset_sbp %>%
+  group_by(SEX, DIS) %>%
+  summarise(
+    average_diff = mean(Diff_SBP_DBP, na.rm = TRUE),
+    sd_diff = sd(Diff_SBP_DBP, na.rm = TRUE)
+  )
+
+# View the summary
+print(summary_by_sex_dis)
+
+
+
+```
+
+
+Conclusion
+
+In this lecture, we covered:
+
+	•	Basic R Operations: Variable assignment, comparisons, and vector indexing.
+	•	Data Frames: Creation and element access.
+	•	Data Manipulation with tidyverse:
+	•	Reading data from files.
+	•	Filtering data using conditions.
+	•	Adding new variables with mutate().
+	•	Grouping and summarizing data with group_by() and summarise().
+
+# How to learn basic R (optional)
+
+`swirl()`
+
+swirl teaches you R programming and data science interactively, at your own pace, and right in the R console!
+
+
+```{r}
+install.packages("swirl")
+library(swirl)
+```
+
+Don't go too further,,, it will do almost the half of my job, teaching (bio)stats.
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```
