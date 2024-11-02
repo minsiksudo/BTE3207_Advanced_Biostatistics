@@ -135,7 +135,8 @@ lm_eqn <- function(m){
 
 p10_data <- data.frame(subejct = 1:8,
                       before = c(126, 131, 129, 122, 130, 131, 128, 134),
-                      after = c(131, 121, 131, 114, 133, 119, 127, 129)) %>%
+                      after = c(131, 121, 131, 114, 133, 119, 127, 129)) %>% 
+         
         mutate(change = before - after)
 
 t.test(p10_data$change)
