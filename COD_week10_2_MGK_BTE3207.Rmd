@@ -1,7 +1,7 @@
 ---
 title: "COD_week10_2_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-11-02"
+date: "2024-11-06"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -18,6 +18,7 @@ markdown:
 
         
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+
 #===============================================================================
 #BTC.LineZero.Header.1.1.0
 #===============================================================================
@@ -30,17 +31,27 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("tidyverse", "pacman", "yaml")
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
 
 
 
 YAML_header <-
         '---
-title: "COD_week10_2_MGK_BTE3207"
+title: "BTE3207 week 9-2"
 author: "Minsik Kim"
-date: "2032.11.02"
+date: "2024.11.31"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -48,7 +59,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230920"
+seed <- "20241104"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -308,8 +319,9 @@ ggplot(dataset_sbp_small, aes(y = SBP, x = BTH_G)) +
 
   
 ```
+
+
 ```{r}
-dataset_sbp
 
 lm(data = dataset_sbp, formula = SBP ~ DBP)
 
@@ -324,6 +336,10 @@ dataset_sbp %>%
         summary
 
 ``` 
+
+
+
+```{r}
 
 
 dataset_sbp_small %>%
