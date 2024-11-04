@@ -16,6 +16,15 @@ markdown:
 ---
         
 
+<!-- <style> -->
+<!--   /* Default light mode styles */ -->
+<!--   .reactable { -->
+<!--     background-color: #ffffff !important; /* Light background */ -->
+<!--     color: #000000 !important;            /* Dark text */ -->
+<!--     border-color: #cccccc !important;     /* Light border */ -->
+<!--   } -->
+
+<!-- </style> -->
         
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
 
@@ -49,9 +58,9 @@ str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
 
 YAML_header <-
         '---
-title: "BTE3207 week 9-2"
+title: "BTE3207 week 10-2"
 author: "Minsik Kim"
-date: "2024.11.31"
+date: "2024.11.06"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -59,7 +68,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20241104"
+seed <- "20241106"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -112,7 +121,7 @@ Let's load the SBP dataset.
 
 ```{r}
 
-dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
 
 
 
@@ -191,7 +200,7 @@ lm(data = dataset_sbp_small, SBP ~ DBP) %>% confint()
 
 ### Deviding samples
 
-In fact, there are two genders in the sample. 
+In fact, there are two SEXs in the sample. 
 
 ```{r}
 
@@ -210,7 +219,7 @@ ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
 
 ### Deviding samples
 
-In fact, there are two genders in the sample. 
+In fact, there are two SEXs in the sample. 
 
 ```{r}
 
@@ -246,7 +255,7 @@ lm(data = dataset_sbp_small, SBP ~ DBP + history_of_hypertension) %>% summary
 
 ```{r}
 palette()
-hue_pal()
+
 
 ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
         #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
@@ -362,7 +371,7 @@ car::avPlots(dataset_sbp_small %>%
 ```{r}
 
 dataset_sbp_small %>%
-        lm(SBP ~ gender, data = .) %>% 
+        lm(SBP ~ SEX, data = .) %>% 
         summary
 
 
@@ -401,7 +410,6 @@ lm(data = dataset_sbp_small, SBP ~ DBP + history_of_hypertension) %>% summary
 
 ```{r}
 palette()
-hue_pal()
 
 ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
         #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
