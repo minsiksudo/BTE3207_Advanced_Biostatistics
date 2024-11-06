@@ -120,9 +120,20 @@ Let's load the SBP dataset.
 dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
 
 
+dataset_sbp_small <- subset(dataset_sbp, row.names(dataset_sbp) %in% sample(x = 1:1000000, size = 1000))
+dataset_sbp
+dataset_sbp_small
 
-head(dataset_sbp)
+lm_result <- lm(data = dataset_sbp_small, formula = DBP ~ SBP)
+lm_result$coefficients
+lm_result$residuals
+summary(lm_result)
 
+lm(data = dataset_sbp_small, formula = FBS ~ BMI)
+lm(data = dataset_sbp_small, formula = BMI ~ FBS) %>%
+        summary
+
+cor(x = dataset_sbp_small$FBS, y = dataset_sbp_small$BMI)
 ```
 
 

@@ -293,6 +293,7 @@ midterm_total %>%
 
 
 midterm_total %>% 
+        mutate(mj = (student_id == 12220775))
         #subset(., .$score_type == "score") %>%
         ggplot(aes(x=total, fill = "white")) +
         geom_histogram() +
@@ -304,7 +305,30 @@ midterm_total %>%
         MetBrewer::scale_fill_met_d("Lakota") 
         
 
+        
+        
 
+midterm_total %>% 
+        mutate(mj = (student_id == 12220775)) %>%
+        #subset(., .$score_type == "score") %>%
+        ggplot(aes(x=total, fill = mj)) +
+        geom_histogram() +
+        theme_classic() +
+        theme(legend.position = "none") +
+        ylab("Number of students") +
+        xlab("Raw score | percent scroe") +
+        facet_wrap(~score_type, ncol = 1) +
+        MetBrewer::scale_fill_met_d("Lakota") 
+        
+midterm_total %>% 
+        mutate(mj = (student_id == 12220775)) %>%
+        subset(., .$score_type!= "score") %>%
+        .[order(.$total, decreasing = T),] %>%
+        data.frame %>%
+        mutate(rank = 1:28) %>%
+        mutate(percentile_from_1st  = rank/28*100) 
+
+        
 ```
 
 
