@@ -51,7 +51,7 @@ path_library <-
                "/Library/Frameworks/R.framework/Resources/library/")
 
 
-str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable", "scatterplot3d")
 
 
 
