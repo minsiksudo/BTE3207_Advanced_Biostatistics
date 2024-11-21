@@ -1,7 +1,7 @@
 ---
 title: "COD_week12_2_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-11-15"
+date: "2024-11-21"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -40,7 +40,7 @@ YAML_header <-
         '---
 title: "BTE3207 week 12-2"
 author: "Minsik Kim"
-date: "2032.11.15"
+date: "2024.11.21"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
