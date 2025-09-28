@@ -273,14 +273,148 @@ dataset_sbp$SBP %>%
                   sd = sd(.))
 
 
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(100) %>%
+        hist(main = "Histogram of SBP, N = 100")
+
+dataset_sbp$SBP %>%
+        sample(100) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(1000) %>%
+        hist(main = "Histogram of SBP, N = 1000")
+
+dataset_sbp$SBP %>%
+        sample(1000) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(10000) %>%
+        hist(main = "Histogram of SBP, N = 10000")
+
+dataset_sbp$SBP %>%
+        sample(10000) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+
+set.seed(1)
+
+dataset_sbp$SBP %>%
+             sample(100000) %>%
+        hist(main = "Histogram of SBP, N = 100000")
+
+dataset_sbp$SBP %>%
+        sample(100000) %>% 
+        data.frame %>% 
+        summarise(mean = mean(.),
+                  sd = sd(.))
+
+
+
+```
+## Repeated, n = 50
+
+
+```{r}
+set.seed(1)
+df <- lapply(1:5, function(i) {
+  data.frame(Sample = i,
+             SBP = sample(dataset_sbp$SBP, 50))
+}) %>% bind_rows()
+
+ggplot(df, aes(x=SBP)) +
+  geom_histogram(bins=15, fill="grey", color="black") +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  theme(strip.text = element_text(size=8),
+        axis.text.x = element_text(angle = 45)) +
+  labs(title="Histograms of 5 random samples (N=50 each)")
+
 ```
 
+
+```{r}
+
+
+set.seed(1)
+
+df <- lapply(1:72, function(i) {
+  data.frame(Sample = i,
+             SBP = sample(dataset_sbp$SBP, 50))
+}) %>% bind_rows()
+
+
+df_means <- df %>% 
+  group_by(Sample) %>% 
+  summarise(mean_SBP = mean(SBP))
+
+ggplot(df, aes(x=SBP)) +
+  geom_histogram(bins=15, fill="grey", color="black") +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  theme(strip.text = element_text(size=8)) +
+  labs(title="Histograms of 72 random samples (N=50 each)",
+       subtitle="Red dashed line = sample mean")
+
+ggplot(df, aes(x=SBP)) +
+  geom_histogram(bins=15, fill="grey", color="black") +
+  geom_vline(data=df_means, aes(xintercept=mean_SBP),
+             color="red", linetype="dashed", size=0.7) +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  theme(strip.text = element_text(size=8)) +
+  labs(title="Histograms of 72 random samples (N=50 each)",
+       subtitle="Red dashed line = sample mean")
+
+```
 
 # Sample mean
 
 This time, let's do some other calculations.
 
 We are going to sample 20 samples (randomly), 5000 times. And then, let's see its histogram
+
+```{r}
+set.seed(1)
+replicate(50, sample(dataset_sbp$SBP, 20)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 50 sample mean SBP from 1M subjects.\nEach sample N = 20",
+             xlim = c(105, 135))
+
+
+```
+
+```{r}
+set.seed(1)
+replicate(500, sample(dataset_sbp$SBP, 20)) %>%
+        data.frame() %>% 
+        colMeans() %>%
+        hist(100,
+             main = "Distribution of 500 sample mean SBP from 1M subjects.\nEach sample N = 20",
+             xlim = c(105, 135))
+
+
+```
+
 
 ```{r}
 set.seed(1)
@@ -644,6 +778,41 @@ dataset_sbp$hypertension %>% mean
 
 ```
 
+```{r}
+
+set.seed(1)
+
+df <- lapply(1:72, function(i) {
+  data.frame(Sample = i,
+             SBP = sample(dataset_sbp$hypertension, 50))
+}) %>% bind_rows()
+
+
+df_means <- df %>% 
+  group_by(Sample) %>% 
+  summarise(mean_SBP = mean(SBP))
+
+ggplot(df, aes(x=SBP)) +
+  geom_histogram(bins=15, fill="grey", color="black") +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  theme(strip.text = element_text(size=8)) +
+  labs(title="Histograms of 72 random samples (N=50 each)",
+       subtitle="Red dashed line = sample mean")
+
+ggplot(df, aes(x=SBP)) +
+  geom_histogram(bins=15, fill="grey", color="black") +
+  geom_vline(data=df_means, aes(xintercept=mean_SBP),
+             color="red", linetype="dashed", size=0.7) +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  theme(strip.text = element_text(size=8)) +
+  labs(title="Histograms of 72 random samples (N=50 each)",
+       subtitle="Red dashed line = sample mean")
+
+```
+
+
 ## Binomial distribution
 
 ```{r}
@@ -689,7 +858,22 @@ x <- 0:n
 probs <- dbinom(x, size=n, prob=p_hat)
 lines(x, probs, col="red", lwd=2) 
 
-n <- 100
+n <- 20
+sim_counts <- replicate(10000, {
+  sample(dataset_sbp$hypertension, n, replace=TRUE) %>% sum()
+})
+
+hist(sim_counts, breaks=seq(-0.5, n+0.5, 1),
+     freq=FALSE, 
+     main=paste(n, "random sampling of hypertention status (n=",n,", p≈",round(p_hat,2),")"),
+     xlab="Number of hypertensive subjects")
+x <- 0:n
+probs <- dbinom(x, size=n, prob=p_hat)
+lines(x, probs, col="red", lwd=2) 
+
+
+
+n <- 1000
 sim_counts <- replicate(10000, {
   sample(dataset_sbp$hypertension, n, replace=TRUE) %>% sum()
 })
