@@ -1,7 +1,7 @@
 ---
-title: "COD_week4_1_MGK_BTE3207"
+title: "COD_2025_week5_1_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2025-09-19"
+date: "2025-09-28"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -70,7 +70,7 @@ str_libraries <- c("tidyverse", "pacman", "yaml", "ggplot2", "tidyverse", "swirl
 
 YAML_header <-
         '---
-title: "BTE3207 week 4-1"
+title: "BTE3207 week 5-1"
 author: "Minsik Kim"
 date: "2025.09.28"
 output:
