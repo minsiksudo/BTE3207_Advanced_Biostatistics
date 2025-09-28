@@ -97,6 +97,135 @@ FUN.LineZero.Report()
 ```
 
 
+# Final statistics
+
+```{r}
+final_score <- readxl::read_excel("/Volumes/MacMini Drive/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Scoreboard/BTE3207_2023F_final_results.xlsx") 
+
+```
+
+```{r}
+final_score_by_student <-
+        final_score %>% 
+        gather(., Problemset, Score, `1`:`total`) %>%
+        .[order(.$student_id), ] %>%
+        mutate(Fullscore  = rep(c(5, 5, 8, 10, 5, 10, 10, 5, 58), 26)) %>%
+        select(-c("rank"))
+final_score_by_student %>% filter(name == "강준석")
+final_score_by_student %>% filter(name == "권은선")
+final_score_by_student %>% filter(name == "김나현")
+final_score_by_student %>% filter(name == "김보송")
+final_score_by_student %>% filter(name == "김수인")
+final_score_by_student %>% filter(name == "김윤아")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김지인")
+final_score_by_student %>% filter(name == "김지현")
+final_score_by_student %>% filter(name == "류진")
+final_score_by_student %>% filter(name == "박준영")
+final_score_by_student %>% filter(name == "박준하")
+final_score_by_student %>% filter(name == "박지용")
+final_score_by_student %>% filter(name == "서창호")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "성호정")
+final_score_by_student %>% filter(name == "손지현")
+final_score_by_student %>% filter(name == "오준혁")
+final_score_by_student %>% filter(name == "옥재현")
+final_score_by_student %>% filter(name == "유상민")
+final_score_by_student %>% filter(name == "이규섭")
+final_score_by_student %>% filter(name == "이민정")
+final_score_by_student %>% filter(name == "이성준")
+final_score_by_student %>% filter(name == "이예원")
+final_score_by_student %>% filter(name == "이한영")
+final_score_by_student %>% filter(name == "이효정")
+
+final_score_by_student %>% filter(name == "황용일")
+
+
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+final_score_by_student %>% filter(name == "김준우")
+
+
+
+```
+
+
+```{r}
+final_score %>% 
+        ggplot(aes(x = total)) +
+        geom_histogram(bins = 20) +
+        theme_classic() 
+
+final_score$total %>% summary        
+
+```
+
+
+```{r}
+gather(final_score, problem, score, `1`:total, factor_key = T) %>%
+        ggplot(aes(x = score, fill = problem)) +
+        geom_histogram(bins = 8) +
+        facet_wrap(~problem, scales = "free_x") +
+        theme_classic() 
+
+
+```
+
+# Q-Q plot
+
+Were they normally distributed?
+
+```{r}
+
+gather(final_score, problem, score, `1`:total, factor_key = T) %>%
+        ggplot(aes(sample = score, col = problem)) +
+        stat_qq() + 
+        stat_qq_line() +
+        facet_wrap(~problem, scales = "free_y") +
+        theme_classic()
+
+
+```
+
+# Does the student with high midterm score has high final score?
+
+```{r}
+
+
+BTE3207_summary <- data.frame(student_id = final_score$student_id,
+           final = final_score$total,
+           midterm = readxl::read_excel("/Volumes/MacMini Drive/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/2023F/Scoreboard/BTE3207_2023F_midterm_results.xlsx") %>%
+        .$total)
+
+
+```
+
+```{r}
+
+BTE3207_summary %>%
+        ggplot(aes(x = midterm, y = final, col = student_id)) +
+        geom_point() +
+        scale_color_viridis_c() +
+        theme_classic() +
+        theme(legend.position = "none") +
+        xlab("Midterm score") +
+        ylab("Final score") +
+        geom_smooth(method = "lm", color = "gray", fill = "lightgray", linetype = "dashed")
+                
+        
+
+
+lm(data = BTE3207_summary, final ~ midterm) %>% summary
+
+
+
+
+```
+
 # Agenda
 
 This lecture will practice running 
@@ -111,7 +240,12 @@ Multiple hypothesis testing correction
 random_data <- data.frame(random_1 = sample(1:100, 10),
                           random_2 = sample(1:100, 10))
 
+random_data$random_1 %>% hist
+random_data$random_2 %>% hist
+```
 
+
+```{r}
 lm(data = random_data, random_1 ~ random_2)
 
 
@@ -121,7 +255,7 @@ Of course, two random data sets are not having significant correlation.
 However, what if we have many many many random dataset?
 
 ```{r}
-set.seed(1)
+set.seed(10)
 random_1000 <- replicate(1000, sample(1:100, 10)) %>%
         data.frame() %>%
         rownames_to_column("number")
@@ -132,6 +266,7 @@ head(random_1000)
 
 ```
 
+
 ```{r}
 
 data_long <- gather(random_1000, sample, data, X1:X1000, factor_key=TRUE)
@@ -139,6 +274,8 @@ data_long <- gather(random_1000, sample, data, X1:X1000, factor_key=TRUE)
 data_long
 
 ```
+
+
 
 ```{r}
 
