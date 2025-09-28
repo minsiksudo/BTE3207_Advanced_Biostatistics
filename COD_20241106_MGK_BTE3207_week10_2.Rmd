@@ -1,0 +1,474 @@
+---
+title: "COD_week10_2_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2024-11-06"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+        
+
+<!-- <style> -->
+<!--   /* Default light mode styles */ -->
+<!--   .reactable { -->
+<!--     background-color: #ffffff !important; /* Light background */ -->
+<!--     color: #000000 !important;            /* Dark text */ -->
+<!--     border-color: #cccccc !important;     /* Light border */ -->
+<!--   } -->
+
+<!-- </style> -->
+        
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 10-2"
+author: "Minsik Kim"
+date: "2024.11.06"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20241106"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+# Multiple linear regression
+
+## Before begin..
+
+Let's load the SBP dataset.
+
+```{r}
+
+dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+
+
+
+head(dataset_sbp)
+
+```
+
+
+Making a new variable `hypertension`
+
+```{r}
+
+dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
+                                           dataset_sbp$DBP > 80,
+                                   T,
+                                   F)
+
+
+dataset_sbp$history_of_hypertension <- ifelse(dataset_sbp$DIS == 1 |
+                                           dataset_sbp$DIS == 2,
+                                   T,
+                                   F)
+
+set.seed(1)
+
+dataset_sbp_small <- subset(dataset_sbp, row.names(dataset_sbp) %in% sample(x = 1:1000000, size = 1000))
+
+dataset_sbp_small$DIS <- as.factor(dataset_sbp_small$DIS)
+
+
+```
+
+## Simple linear regression
+
+With `lm()` function, we can calculate the linear model of DBP~SBP with the least squares algorithm.
+
+```{r}
+
+#A function that returns equation
+
+lm_eqn <- function(m){
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+
+
+
+ggplot(data = dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        geom_point() +
+        theme_classic(base_family = "serif", base_size = 20) +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") + 
+        geom_smooth(method = "lm") +
+        geom_label(y = 170, x = 68,
+                  label = lm_eqn(lm(data = dataset_sbp_small, SBP ~ DBP)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+
+lm(data = dataset_sbp_small, SBP ~ DBP) %>% confint()
+
+#rnorm(100, mean = 100, sd = 1)
+
+```
+
+## Multiple regression
+
+
+## Basic concept {.tabset}
+
+
+### Deviding samples
+
+In fact, there are two SEXs in the sample. 
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point(aes(col = history_of_hypertension)) +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") + 
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top") +
+        guides(col=guide_legend(title = "History of hyper tension"))
+        
+  
+```
+
+### Deviding samples
+
+In fact, there are two SEXs in the sample. 
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point(aes(col = history_of_hypertension)) +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") +
+        facet_wrap(~history_of_hypertension) +
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top",
+              plot.title = element_text(color = "Blue", hjust = 0.7, vjust = -23)) +
+        guides(col=guide_legend(title = "History of hyper tension")) +
+        geom_abline(intercept = 37, slope = 1.1, col = "blue") +
+        ggtitle("y = 37 + 1.1 x")
+
+
+
+
+
+
+```
+# Multiple linear regression
+
+
+```{r}
+
+lm(data = dataset_sbp_small, SBP ~ DBP) %>% summary
+
+lm(data = dataset_sbp_small, SBP ~ DBP + history_of_hypertension) %>% summary
+
+
+```
+
+
+
+```{r}
+palette()
+
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point(aes(col = history_of_hypertension)) +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") + 
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top") +
+        guides(col=guide_legend(title = "History of hyper tension")) +
+        geom_abline(intercept = 40, slope = 1.04, col = "#F8766D") +
+        annotate(geom="text", x=120, y=140, label="LM of HT-False",
+              color="#F8766D", family = "serif", size = 8) + 
+        geom_abline(intercept = 46.42, slope = 1.04, col = "#00BFC4") +
+        annotate(geom="text", x=100, y=170, label="LM of HT-True",
+              color="#00BFC4", family = "serif", size = 8)
+
+```
+
+
+### {-}
+
+## Continuous variable as covariate
+
+### Deviding samples
+
+
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point() +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") +
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top",
+              plot.title = element_text(color = "Blue", hjust = 0.7, vjust = -23)) +
+        guides(col=guide_legend(title = "History of hyper tension")) + 
+        geom_label(y = 170, x = 68,
+                  label = lm_eqn(lm(data = dataset_sbp_small, SBP ~ DBP)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+
+        
+  
+```
+
+
+```{r}
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = BTH_G)) +
+        geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point() +
+        ylab("SBP (mmHg)") +
+        xlab("Age group") +
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top",
+              plot.title = element_text(color = "Blue", hjust = 0.7, vjust = -23)) +
+        guides(col=guide_legend(title = "History of hyper tension")) + 
+        geom_label(y = 170, x = 18,
+                  label = lm_eqn(lm(data = dataset_sbp_small, SBP ~ BTH_G)),
+                  parse = TRUE,
+                  family='serif',
+                  size = 8, label.size = 0, color = "blue")
+
+  
+```
+
+
+```{r}
+
+lm(data = dataset_sbp, formula = SBP ~ DBP)
+
+
+model_result <- lm(data = dataset_sbp, formula = SBP ~ DBP)
+
+dataset_sbp$DIS <- as.factor(dataset_sbp$DIS)
+dataset_sbp %>% summary
+
+dataset_sbp %>% 
+        lm(formula = SBP ~ DBP + DIS + DBP * DIS) %>%
+        summary
+
+``` 
+
+
+
+```{r}
+
+
+dataset_sbp_small %>%
+        lm(SBP ~ DBP + BTH_G, data = .) %>% 
+        summary
+
+dataset_sbp_small %>%
+        lm(SBP ~ DBP + SEX, data = .) %>% 
+        summary
+
+car::avPlots(dataset_sbp_small %>%
+        lm(SBP ~ DBP + history_of_hypertension, data = .))
+
+car::avPlots(dataset_sbp_small %>%
+        lm(SBP ~ DBP + history_of_hypertension, data = .))
+
+
+```
+
+```{r}
+
+dataset_sbp_small %>%
+        lm(SBP ~ SEX, data = .) %>% 
+        summary
+
+
+dataset_sbp_small %>%
+        lm(SBP ~ history_of_hypertension, data = .) %>% 
+        summary
+
+        
+dataset_sbp_small %>%
+        lm(SBP ~ DBP + history_of_hypertension, data = .) %>% 
+        summary
+
+dataset_sbp_small %>%
+        lm(SBP ~ DBP + history_of_hypertension, data = .) %>%
+        car::avPlots()
+        
+dataset_sbp_small %>%
+        ggplot(., aes(y = SBP, x = history_of_hypertension)) +
+        geom_jitter()
+  
+```
+
+# Multiple linear regression
+
+
+```{r}
+
+lm(data = dataset_sbp_small, SBP ~ DBP) %>% summary
+
+lm(data = dataset_sbp_small, SBP ~ DBP + history_of_hypertension) %>% summary
+
+
+```
+
+
+
+```{r}
+palette()
+
+ggplot(dataset_sbp_small, aes(y = SBP, x = DBP)) +
+        #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Plot regression slope
+        #geom_segment(aes(xend = SBP, yend = predicted), alpha = .2) +  # alpha to fade lines
+        geom_point(aes(col = history_of_hypertension)) +
+        ylab("SBP (mmHg)") +
+        xlab("DBP (mmHg)") + 
+        theme_classic( base_family = "serif", base_size = 20) +
+        theme(legend.position = "top") +
+        guides(col=guide_legend(title = "History of hyper tension")) +
+        geom_abline(intercept = 40, slope = 1.04, col = "#F8766D") +
+        annotate(geom="text", x=120, y=140, label="LM of HT-False",
+              color="#F8766D", family = "serif", size = 8) + 
+        geom_abline(intercept = 46.42, slope = 1.04, col = "#00BFC4") +
+        annotate(geom="text", x=100, y=170, label="LM of HT-True",
+              color="#00BFC4", family = "serif", size = 8)
+
+```
+
+
+
+
+### Simulation
+
+
+
+
+
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```

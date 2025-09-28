@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1077721/903adaa8741d4b5dae9d5268332debcc
+bundleId: https://api.rpubs.com/api/v1/document/1077721/903adaa8741d4b5dae9d5268332debcc
+url: http://rpubs.com/minsiksudo/1077721/edit
+when: 1693831892.02769
+lastSyncTime: 1693831892.0277
