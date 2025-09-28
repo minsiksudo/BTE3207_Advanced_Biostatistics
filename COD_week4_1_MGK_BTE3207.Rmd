@@ -644,7 +644,7 @@ dataset_sbp$hypertension %>% mean
 
 ```
 
-## 
+## Binomial distribution
 
 ```{r}
 set.seed(123)
