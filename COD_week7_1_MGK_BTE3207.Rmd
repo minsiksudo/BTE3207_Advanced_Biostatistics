@@ -1,7 +1,7 @@
 ---
 title: "COD_week7_1_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-10-09"
+date: "2024-10-15"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -14,9 +14,17 @@ editor_options:
 markdown: 
         wrap: 72
 ---
-        
 
-        
+<!-- <style> -->
+<!--   /* Default light mode styles */ -->
+<!--   .reactable { -->
+<!--     background-color: #ffffff !important; /* Light background */ -->
+<!--     color: #000000 !important;            /* Dark text */ -->
+<!--     border-color: #cccccc !important;     /* Light border */ -->
+<!--   } -->
+
+<!-- </style> -->
+
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
 #===============================================================================
 #BTC.LineZero.Header.1.1.0
@@ -30,9 +38,19 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("tidyverse", "pacman", "yaml")
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
 
 
 
@@ -40,7 +58,7 @@ YAML_header <-
         '---
 title: "BTE3207 week 7-1"
 author: "Minsik Kim"
-date: "2032.10.10"
+date: "2024.10.15"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -48,7 +66,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230920"
+seed <- "20241015"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -95,21 +113,228 @@ FUN.LineZero.Report()
 
 # Before begin..
 
-Let's load the SBP dataset.
+Let’s load the SBP (Systolic Blood Pressure) dataset, which we will use throughout this document for various statistical analyses.
+
 
 ```{r}
 
-read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv") %>%
+        reactable::reactable(., sortable = T)
 
-dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+
+dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
 
 head(dataset_sbp)
 
 ```
 
-Making a new variable `hypertension`
+# Creating a New Variable: Hypertension
+
+Logical Variables in R:
+
+Logical variables store TRUE or FALSE values. These variables are useful in decision-making processes (like identifying conditions where blood pressure exceeds a threshold). In R, the result of comparisons such as > or == is always logical (TRUE or FALSE).
+
+Using ifelse() to Create Logical Variables:
+
+The ifelse() function is a vectorized conditional function in R that checks a condition for each element in a vector. It returns one value if the condition is TRUE and another value if it is FALSE.
+
+Syntax: ifelse(condition, value_if_TRUE, value_if_FALSE)
+
+Below, we use ifelse() to create a logical variable called hypertension, which will be TRUE if either the systolic blood pressure (SBP) is greater than 130 or the diastolic blood pressure (DBP) is greater than 80, and FALSE otherwise.
+
+## Use of `str()` to validate the datatype
+
+From the last lecture (weeke 6-2), we've leared how to check type of a data in R.
+
 
 ```{r}
+
+a <- 1
+
+a
+
+str(a)
+
+b <- c(1, 2, 3)
+b <- c(1:3)
+
+str(b)
+
+a
+b
+
+c <- c(a, b)
+c
+
+c <- c("a", "b", "c")
+
+str(c)
+
+
+```
+
+
+## Logical values
+
+From (Homework - reading) Week 3-2 markdown URL, we've learned what is logical variables.
+
+# Logical values...having logical values.
+
+```{r}
+a <- 1
+a = 1
+a == 1
+
+a
+
+```
+
+`=` does the same thing as `<-`. 
+
+To test if the thing are same, R uses `==`.
+
+
+```{r}
+a
+
+1
+
+a == 1
+
+
+
+```
+
+as we inserted `a <- 1` in the previous code chunk, this test results in `TRUE`
+
+```{r}
+"a"
+
+1
+
+"a" > 1
+
+"a" < 1
+
+"a" == 1
+
+"a" != 1
+
+!("a" == 1)
+
+
+```
+This test will test whether a character, `"a"`, is the same with a numeric value `1`. As they are not the same, it returns `FALSE`
+
+Here, `TRUE` and `FALSE` results are , and they are one type of **binary variable**. It works for longer vectors or variables as well.
+
+```{r}
+
+c(1, 2, 3, 4, 5) == c(1, 2, 2, 4, 5)
+
+c(1, 2, 3, 4, 5) == 1
+
+```
+
+And it results in a vector of all the logical tests. Using this, we can filter data easily!
+
+`T/F` often converted to *binary variable.* Therfore R recognizes T as 1 and F as 0 as well. 
+
+```{r}
+str(c(1,2,3))
+
+
+str(c("one","two","three"))
+
+
+str(c("1","2","3"))
+
+as.numeric(c("1","2","3"))
+
+str(as.numeric(c("1","2","3")))
+
+1 == 1
+
+TRUE == "1"
+
+TRUE == 1
+
+
+
+```
+
+
+## ifelse() does doe same as `if` from excel.
+
+
+```{r}
+ifelse(TRUE, "Right", "Wrong")
+
+ifelse(FALSE, "Right", "Wrong")
+
+
+ifelse(1 > 0, 1, 11)
+
+ifelse(1 < 0, 1, 11)
+
+ifelse(13 > 20, "Right", "Wrong")
+
+ifelse(13 == 20 | 1 > 0, "Right", "Wrong")
+
+
+```
+
+# AND and OR 
+
+In R, `|` is "OR" and  `&` is "AND".
+
+	•	If either condition is true, the result will be TRUE.
+	•	If both conditions are false, the result will be FALSE.
+
+
+```{r}
+#AND
+TRUE & TRUE
+
+TRUE & FALSE
+
+FALSE & FALSE
+
+#OR
+
+TRUE | TRUE
+
+FALSE | TRUE
+
+FALSE | FALSE
+
+#AND
+
+(1 == 1) & (2 < 3)
+
+(1 == 1) & (2 > 3)
+
+#OR
+
+(1 == 1) | (2 < 3)
+
+(1 == 1) | (2 > 3)
+
+(1 == 2) | (2 > 3)
+
+```
+
+
+Using `ifelse()`, `&`, and `|`, we can create a new variable called hypertension
+
+
+```{r}
+# Create 'hypertension' variable based on SBP and DBP
+
+dataset_sbp$SBP
+dataset_sbp$DBP
+
+
 
 dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
                                            dataset_sbp$DBP > 80,
@@ -119,49 +344,63 @@ dataset_sbp$hypertension <- ifelse(dataset_sbp$SBP > 130 |
 
 ```
 
-# norm functions
+In the code, `|` is the logical *OR* operator. The condition checks if either SBP > 130 *or* DBP > 80 is true.
 
-`rnorm()` - random sampling
+This new logical variable can now be used to classify individuals as hypertensive or non-hypertensive.
+
+
+
+# Understanding Normal Distribution Functions
+
+1. rnorm() – Random Sampling from a Normal Distribution
+
+This function generates random numbers following a normal distribution.
+
 
 ```{r}
 
+# Generate 5 random numbers from a standard normal distribution (mean = 0, sd = 1)
 rnorm(5)
 
-#rnorm(100, mean = 100, sd = 1)
-
-```
-
-`pnorm()` - probability of given z-score (z-score table results)
-
-```{r}
-
-pnorm(2)
-
-pnorm(0)
-
-pnorm(1)
-
-pnorm(3)
+# Example with custom mean and standard deviation
+# rnorm(100, mean = 100, sd = 1)
 
 ```
 
 
-`qnorm()` - gets z-score of given probability
+2. pnorm() – Cumulative Probability for Z-scores (z-score table results)
+
+pnorm() gives the cumulative probability for a given z-score (i.e., the area under the curve up to that point).
 
 ```{r}
-qnorm(0.97724985)
+# Cumulative probabilities for different z-scores
+pnorm(2)   # ~97.72% of the data lies below a z-score of 2
+pnorm(0)   # 50% of the data lies below the mean
+pnorm(1)   # ~84.13% of the data is below a z-score of 1
+pnorm(3)   # ~99.87% of the data is below a z-score of 3
 
-qnorm(0.5)
 ```
 
-`pnorm()` and `qnorm()` are reverse!
+
+3. qnorm() – Find Z-scores from Cumulative Probability
+
+qnorm() returns the z-score corresponding to a given cumulative probability.
+
+```{r}
+# Z-scores for given probabilities
+qnorm(0.97724985)  # Returns ~2, the z-score for 97.72%
+qnorm(0.5)         # Returns 0, the z-score for 50%
+```
+
+Note: `pnorm()` and `qnorm()` are *reverse* operations of each other.
+
 
 ```{r}
 
-
-pnorm(qnorm(0))
-
-qnorm(pnorm(2))
+# Calculating density at different points
+dnorm(0)  # Height at the mean
+dnorm(1)  # Height at z = 1
+dnorm(-1) # Height at z = -1
 
 ```
 
@@ -175,48 +414,88 @@ dnorm(1)
 
 dnorm(-1)
 
-```
-Ploting of dnorm result
-
-```{r}
-seq(-4, 4, by = 0.5)
-
-plot(dnorm(seq(-4, 4, by = 0.5))~seq(-4, 4, by = 0.5), 
-     ylab = "dnorm() result",
-     xlab = "dnorm() input",)
+dnorm(10000000000000000000000)
 
 ```
 
+# Plotting the Normal Distribution
 
-Ploting of normal curve
+Plotting Discrete Values from dnorm().
+
+Using sequences, add dnorm, the calculated height of the normal distribution function
 
 ```{r}
-#Create a sequence of 100 equally spaced numbers between -4 and 4
-x <- seq(-4, 4, length=100)
 
-#create a vector of values that shows the height of the probability distribution
-#for each value in x
+seq(-4, 4, by = 0.5) # generates seqeunces
+
+dnorm(0)
+
+dnorm(1)
+
+dnorm(-1)
+
+dnorm(c(0, 0, 0, 1))
+
+dnorm(seq(-4, 4, by = 0.5))# Height of normal distribution function of the sequences as x values
+
+# Generate sequence and plot dnorm results
+x_vals <- seq(-4, 4, by = 0.5) #storing the data
+
+dnorm(seq(-4, 4, by = 0.5))# Height of normal distribution function of the sequences as x values
+dnorm(x_vals)
+x_vals
+plot(x_vals ~ x_vals)
+
+dnorm(x_vals)
+
+plot(dnorm(x_vals) ~ x_vals)
+
+
+
+plot(dnorm(x_vals) ~ x_vals,  
+     ylab = "dnorm() result", 
+     xlab = "dnorm() input")
+
+```
+
+Ploting of a smooth normal curve
+
+```{r}
+# Create a sequence of values and calculate their densities
+
+x <- seq(-4, 4, length = 100)
 y <- dnorm(x)
 
-#plot x and y as a scatterplot with connected lines (type = "l") and add
-#an x-axis with custom labels
-plot(x,y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "") +
-        axis(1, at = -3:3, labels = c("-3s", "-2s", "-1s", "mean", "1s", "2s", "3s")) +
-        abline(v = 2, col = "red") +
-        abline(v = -2, col = "red")
-        
+# Plot the normal curve with labeled x-axis
+plot(x, y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "") # here, type l means line.
+
+axis(1, at = -3:3, labels = c("-3σ", "-2σ", "-1σ", "mean", "1σ", "2σ", "3σ")) # adding axes texts
+abline(v = 2, col = "red")  # Add a vertical line at z = 2
+abline(v = -2, col = "red") # Add a vertical line at z = -2
+
+
 ```
 
-# Statistical tests
+# Logical Variables and Statistical Tests
 
+Now that we’ve created the hypertension variable as a logical variable, we can use it in statistical tests.
 
-## t-test
+## Single-sample t-test (getting confidence interval of some data)
 
-getting confidence interval of some data
+This tests if the mean of a sample is significantly different from a known value.
 
 ```{r}
+c(1, 2, 3)
+
 t.test(c(1, 2, 3))
 
+result <- t.test(c(1, 2, 3))
+
+result$p.value
+
+result$conf.int
+
+result #a list of statistical test. Use $ to explore more!
 
 result <- t.test(dataset_sbp$SBP) # Extract the confidence interval 
 
@@ -228,28 +507,42 @@ result$conf.int
 
 ```
 
-comparing groups with t-test
+## Two-Sample t-test:
+
+This tests if two groups have significantly different means.
+
+Now that we’ve created the hypertension variable as a logical variable, we can use it in statistical tests.
+
+Two-Sample t-Test Example:
+
 
 ```{r}
-
-result <- t.test(SBP ~ SEX, data = dataset_sbp) # Extract the confidence interval 
-
-
+dataset_sbp
+#t.test(dataset_sbp$SBP ~ dataset_sbp$SEX) 
+result <- t.test(SBP ~ SEX, # y ~ x 
+                 data = dataset_sbp) # Extract the confidence interval 
+result
 result <- t.test(SBP ~ hypertension, data = dataset_sbp) # Extract the confidence interval 
 result
 ```
 
-## z.test()
+# Z-Test for Proportions
 
-one-sample z-test
+## one-sample z-test using z.test()
+
+Test if the proportion of a sample is different from a given proportion.
+
 
 ```{r}
+# Install and load the BSDA package
 
 install.packages("BSDA")
 
 library(BSDA)
+str(dataset_sbp$hypertension)
+mean(dataset_sbp$hypertension)
 
-
+# Perform a one-sample z-test
 
 result <- z.test(dataset_sbp$hypertension,
                  sigma.x = mean(dataset_sbp$hypertension) *
@@ -261,26 +554,44 @@ result
 
 ```
 
+
 Hypertention table
 
 ```{r}
+dataset_sbp$BTH_G
+dataset_sbp$SEX
+dataset_sbp$DIS
+
 table(dataset_sbp$SEX)
 table(dataset_sbp$DIS)
+table(dataset_sbp$BTH_G)
+
 
 table(dataset_sbp$SEX, dataset_sbp$hypertension)
 
 
 ```
 
+## Two-Sample Z-Test:
+
 two-sample z-test
 
 ```{r}
-#Maknig subsets of data
+# Subset the data by sex
+
 
 library(tidyverse)
 
-dataset_male <- dataset_sbp %>% subset(., .$SEX == 1)
+dataset_male <- dataset_sbp %>% 
+        subset(., .$SEX == 1)
+
+dataset_male <- dataset_sbp %>% 
+        filter(SEX == 1)
+
+
 dataset_female <-  dataset_sbp %>% subset(., .$SEX == 2)
+
+# Perform two-sample z-test
 
 result <- z.test(x = dataset_male$hypertension,
                  y = dataset_female$hypertension,
@@ -293,49 +604,79 @@ result
 
 ```
 
+# Chi-square test for independence
 
-## Chi-square test
+## Two-group Chi-square test
 
-Chi-square test for two groups
+Check if two categorical variables are independent.
 
 ```{r}
+# Chi-square test between hypertension and sex
 
-result <- chisq.test(x = dataset_sbp$hypertension,
-                     y = dataset_sbp$SEX)
+result <- chisq.test(y = dataset_sbp$hypertension,
+                     x = dataset_sbp$SEX)
 
-result
+result$statistic
+
+result$p.value
+
+
 
 ```
 
-**p**-value is the same as z-score test
+Note: **p**-value is the same as z-score test
 
-Chi-square test for multiple groups
+## Chi-square test for multiple groups
+
+Check relationships between multiple categorical variables.
 
 ```{r}
+#https://www.data.go.kr/data/15095105/fileData.do?recommendDataYn=Y
+# - DIS : 고혈압/당뇨병 진료여부 
+# 고혈압/당뇨병 진료내역 있음: 1 
+# 고혈압 진료내역 있음: 2
+# 당뇨병 진료내역 있음: 3
+# 고혈압/당뇨병 진료내역 없음: 4
 
 table(dataset_sbp$SEX, dataset_sbp$DIS)
 
-result <- chisq.test(y = dataset_sbp$DIS,
-           x = dataset_sbp$SEX)
+# Chi-square test between sex and disease status
 
-result
+result <- chisq.test(x = dataset_sbp$DIS,
+           y = dataset_sbp$SEX)
+
+result$p.value
+
+result$statistic
+
+result$expected
+
+result$stdres
 
 ```
 
-## Exact test
+## Fisher's exact test
+
+Fisher’s exact test is used when sample sizes are small.
 
 ```{r}
-
 #Author DataFlair
 
 data_frame <- read.csv("https://goo.gl/j6lRXD")
+data_frame
 
 #Reading CSV
 data <- table(data_frame$treatment, data_frame$improvement)
-
+data
 
 fisher.test(data)
 
+# or 
+
+# Perform Fisher's exact test on the hypertension and sex table
+
+#table(dataset_sbp$SEX, dataset_sbp$hypertension)
+fisher.test(table(dataset_sbp$SEX, dataset_sbp$hypertension))
 
 
 ```
@@ -349,6 +690,11 @@ table(dataset_sbp$SEX,
 fisher.test(table(dataset_sbp$SEX,
                   dataset_sbp$hypertension))
 
+install.packages("tidyverse")
+
+library(tidyverse)
+
+
 table(dataset_sbp$SEX,
                   dataset_sbp$hypertension) %>%
         fisher.test()
@@ -358,25 +704,23 @@ table(dataset_sbp$SEX,
 As sample number is high, Fisher's exact test results are having the same result as Chi-square / z-test.
 
 
-## Confidence interval calculations, statistical tests
+## Confidence intervals and statistical tests using epitools
 
-`epitools` pacakge automates all the calculations and tests!
+`epitools` pacakge automates all the calculations and tests! Especially for risk ratios and odds ratios.
 
 
 ```{r}
+# Install and load epitools
 install.packages("epitools")
-
 library(epitools)
-
-
-#Confidence interval of RR
+data
+# Calculate risk ratio with confidence interval
 riskratio.wald(data)
 
-#Confidence interval of RR
+# Calculate odds ratio with confidence interval
 oddsratio.wald(data)
 
 ```
-
 
 # Bibliography
 

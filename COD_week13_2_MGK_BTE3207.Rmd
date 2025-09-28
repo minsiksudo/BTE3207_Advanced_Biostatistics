@@ -1,7 +1,7 @@
 ---
 title: "COD_week13_2_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-11-24"
+date: "2024-11-24"
 output:
         rmdformats::downcute:
         downcute_theme: "chaos"
@@ -30,9 +30,19 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("tidyverse", "pacman", "yaml")
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
 
 
 
@@ -40,7 +50,7 @@ YAML_header <-
         '---
 title: "BTE3207 week 13-2"
 author: "Minsik Kim"
-date: "2032.11.24"
+date: "2024.11.25"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -48,7 +58,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230920"
+seed <- "20241125"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -57,7 +67,7 @@ FUN.LineZero.Boot <- function() {
         .libPaths(path_library)
         
         require(pacman)
-        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml", "lmerTest", "vegan", "phyloseq", "ggplot"))
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml", "lmerTest"))
         
         knitr::opts_knit$set(root.dir = path_working)
         
@@ -88,6 +98,8 @@ FUN.LineZero.Report <- function() {
         cat(YAML_header)
 }
 FUN.LineZero.Report()
+
+
 
 
 ```
@@ -123,6 +135,14 @@ randomize = T will generate a matrix with mixed orders.
 
 daewr::PBDes(nfactors = 11, nruns = 12)
 
+# Error examples
+#  daewr::PBDes(nfactors = 12, nruns = 12) 
+
+
+daewr::PBDes(nfactors = 10, nruns = 12)
+
+#daewr::PBDes(nfactors = 15, nruns = 24)
+
 ```
 
 
@@ -135,13 +155,19 @@ You can run a miultiple linear regression that is containing all the data!
 
 ```{r}
 library(tidyverse)
-read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv") %>%
-        names 
+#<<<<<<< HEAD
+
+download.file("https://raw.githubusercontent.com/minsiksudo/BTE3207_Advanced_Biostatistics/refs/heads/main/PBD_example_data.csv", "PBD_example_data.csv")
+
+pbd_data <- read.csv("PBD_example_data.csv")
+
 ```
 
 ```{r}
  lm(Biomass ~ Glucose + YE + KH2PO4 + K2HPO4 + MgSO4 + CaCl2 + FeSO4 + Fructose + NH4Cl + TM + Vitamin,
-    data = read.csv("/Users/minsikkim/Dropbox (Personal)/Git/BTE3207_Advanced_Biostatistics(Macmini)_git/BTE3207_Advanced_Biostatistics/PBD_example_data.csv")) %>% summary
+#<<<<<<< HEAD
+    data = pbd_data) %>% summary
+
 ```
 
 This is your Plackett-Burman result.
@@ -161,6 +187,9 @@ using `ccd` function, you can generate a experimental design that can be used fo
 
 ```{R}
 
+#2 factor experiment
+ccd (2)
+#3 factor experiment
 ccd (3)
 
 SOdes2 <- ccd (2, n0 = c(4,6), alpha = "rotatable", inscribed = F)
@@ -171,6 +200,7 @@ SOdes2
 
 
 With `coding` argument, you can set the levels of your data into actual values
+
 ```{r}
 SOdes2 <- ccd (3, n0 = c(4,6), alpha = "rotatable", inscribed = F,
                coding = list (
@@ -217,6 +247,25 @@ persp(CR1.rsm,
       xlabs = c(expression("Time (min)", "Temperature (°C)")), # axis labels
       theta=30, 
       phi=30, r = 120, d=120, 
+      border = NULL, 
+      ltheta = 0, 
+      lphi = 0, 
+              shade = 0.75, zlab="Yield", col.axis=37, font.lab=2, col.lab=35,
+              contour=("colors"))
+
+
+```
+
+Changing theta, phi, and r can rotate the graph
+
+```{r}
+
+persp(CR1.rsm, 
+      Time ~ Temp, #plot xs
+      col=rainbow(50),
+      xlabs = c(expression("Time (min)", "Temperature (°C)")), # axis labels
+      theta=50, 
+      phi=3, r = 180, d=120, 
       border = NULL, 
       ltheta = 0, 
       lphi = 0, 

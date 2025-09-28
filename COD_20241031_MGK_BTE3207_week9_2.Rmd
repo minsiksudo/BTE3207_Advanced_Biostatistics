@@ -1,0 +1,641 @@
+---
+title: "COD_week9_2_MGK_BTE3207"
+author: "Minsik Kim"
+date: "2024-10-31"
+output:
+        rmdformats::downcute:
+        downcute_theme: "chaos"
+code_folding: show
+fig_width: 6
+fig_height: 6
+df_print: paged
+editor_options: 
+        chunk_output_type: inline
+markdown: 
+        wrap: 72
+---
+
+<!-- <style> -->
+<!--   /* Default light mode styles */ -->
+<!--   .reactable { -->
+<!--     background-color: #ffffff !important; /* Light background */ -->
+<!--     color: #000000 !important;            /* Dark text */ -->
+<!--     border-color: #cccccc !important;     /* Light border */ -->
+<!--   } -->
+
+<!-- </style> -->
+
+```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
+
+
+
+YAML_header <-
+        '---
+title: "BTE3207 week 9-2"
+author: "Minsik Kim"
+date: "2024.10.31"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20241031"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+        .libPaths(path_library)
+        
+        require(pacman)
+        pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+        
+        knitr::opts_knit$set(root.dir = path_working)
+        
+        str_libraries |> unique() |> sort() -> str_libraries
+        pacman::p_load(char = str_libraries)
+        
+        set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+        cat("Line Zero Environment:\n\n")
+        paste("R:", pacman::p_version(), "\n") |> cat()
+        cat("Libraries:\n")
+        for (str_libraries in str_libraries) {
+                paste(
+                        "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+                        "\n", sep = ""
+                ) |> cat()
+        }
+        paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+        paste("    Library Path:", path_library, "\n") |> cat()
+        paste("    Working Path:", path_working, "\n") |> cat()
+        paste("Seed:", seed, "\n\n") |> cat()
+        cat("YAML Header:\n")
+        cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+# Before begin..
+
+
+
+Function to be used.
+
+```{r}
+
+lm_eqn <- function(m){
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+```
+
+# Example 10
+
+```{r}
+
+p10_data <- data.frame(subejct = 1:8,
+                      before = c(126, 131, 129, 122, 130, 131, 128, 134),
+                      after = c(131, 121, 131, 114, 133, 119, 127, 129)) %>%
+        mutate(change = before - after)
+
+t.test(p10_data$change)
+#or
+t.test(p10_data$after, p10_data$before, paired = T)
+
+```
+
+# Example 11
+
+```{r}
+p11_data <- data.frame(subejct = 1:20,
+                       group =  c(replicate(10, "low_carb"), replicate(10, "low_fat")),
+                      data = c(-10.8, -10.6, 3.5, 10.4, -7.4, -2.6, -6.5, 1.7, -2.9, -7.6,
+                               -1.3, -0.9, -1.2, -0.5, -1.6, -0.9, -2.5, -5, -3.4, -1.9)) 
+
+t.test(x = subset(p11_data, p11_data$group == "low_carb")$data, 
+       y = subset(p11_data, p11_data$group == "low_fat")$data,
+       paired = F,
+       var.equal = F)
+
+
+```
+
+
+# Example 12
+
+```{r}
+
+p12_data <- data.frame(group = c("obese", "not_obese"),
+                       low_fat = c(52, 130),
+                       low_carb = c(30, 209),
+                       no_diet = c(90, 130)) %>%
+        column_to_rownames("group") %>% t %>% data.frame()
+
+library(epitools)
+
+oddsratio(as.matrix(p12_data), rev = "rows")
+
+chisq.test(p12_data)
+
+
+```
+
+# Example 13
+
+```{r}
+
+p13_data <- data.frame(group = c("Obese", "Not obese"),
+                       hypertension = c(6, 2),
+                       normal = c(5, 9)) %>%
+        column_to_rownames("group")
+
+a <- p13_data[1,1]
+b <- p13_data[1,2]
+c <- p13_data[2,1]
+d <- p13_data[2,2]
+
+
+
+(factorial(a+b) * factorial(a+c) * factorial(c+d) * factorial(b+d))/
+(factorial(a+b+c+d) * factorial(a) * factorial(b) * factorial(c) * factorial(d))
+
+cat("\n chi.sq-test")
+chisq.test(p13_data)
+
+# Counts of hypertension cases
+hypertension_counts <- c(89, 102)
+# Total counts for each group
+total_counts <- c(89 + 93, 102 + 137)
+
+cat("\n z-test")
+prop.test(hypertension_counts, total_counts, alternative = "two.sided", correct = FALSE)
+```
+
+
+
+# Statistics on the results
+
+
+# Score data in baxplot - by each problem set
+
+```{r}
+# 
+# midterm <- readxl::read_excel("Inha/5_Lectures/2023/Advanced biostatistics/2023F/Scoreboard/BTE3207_2023F_midterm_results.xlsx") %>%
+#         tidyr::gather(., problemset, score, `1`:`12`, factor_key=TRUE)
+
+#readxl::read_excel("Inha/5_Lectures/2024/Advanced biostatistics/2024F/BTE3207_2024F_midterm_score.xlsx")
+
+midterm <- readxl::read_excel("Inha/5_Lectures/2024/Advanced biostatistics/2024F/BTE3207_2024F_midterm_score.xlsx") %>%
+        select(-name,-`87_score`, -`100_score`, -`1st_to_100`) %>% 
+        subset(., .$student_id != 0) 
+        
+        readxl::read_excel("Inha/5_Lectures/2024/Advanced biostatistics/2024F/BTE3207_2024F_midterm_score.xlsx") %>%
+        select(-name,-`87_score`, -`100_score`, -`1st_to_100`) %>% 
+        subset(., .$student_id != 0) %>%
+        subset(., .$student_id == 12215379)
+        
+full_score <- readxl::read_excel("Inha/5_Lectures/2024/Advanced biostatistics/2024F/BTE3207_2024F_midterm_score.xlsx") %>%
+        select(-name,-`87_score`, -`100_score`, -`1st_to_100`) %>% 
+        subset(., .$student_id == 0) %>%
+        select(-student_id, ) %>%
+        t %>%
+        data.frame(full_score = .) %>%
+        rownames_to_column("problemset")
+
+students_list <- readxl::read_excel("Inha/5_Lectures/2024/Advanced biostatistics/2024F/BTE3207_2024F_students_list.xlsx") %>%
+        rename(student_id = "학번",
+               department = "학부(과)",
+               major = "전공",
+               year = "학년") %>% 
+        select(c("student_id", "department", "major", "year")) %>%
+        mutate(department = case_when(department == "생명공학과" ~ "BE",
+                                      department == "식품영양학과" ~ "FS",
+                                      department == "화학과" ~ "CHEM",
+                                      department == "통계학과" ~ "STAT",
+                                      department == "해양과학과" ~ "OS",
+                                      .default = NA))
+
+
+
+midterm_merged <- merge(midterm, students_list, by = "student_id", all = T) %>%
+        tidyr::gather(., problemset, score, `p1`:`p13`, factor_key=TRUE) %>%
+        merge(., full_score, by = "problemset") %>%
+        mutate(score_perc = score/full_score*100, .before = "full_score") %>%
+        tidyr::gather(., score_type, score, `score`:`score_perc`, factor_key=TRUE)
+
+
+midterm_total <- midterm_merged %>%
+        mutate(student_year = substr(student_id, 3,4)) %>% 
+        group_by(student_id, score_type) %>%
+        summarise(student_year = student_year[1],
+                  year = year[1],
+                  department = department[1],
+                  major = major[1],
+                  total = sum(score)) %>%
+        mutate(total = case_when(score_type == "score_perc" ~ total/1300 * 100,
+                                 .default = total))
+
+
+cat("\n Summary of raw score")
+
+midterm_total %>% 
+        subset(., .$score_type == "score") %>%
+        .$total %>%
+        summary
+
+
+cat("\n Summary of percent score (over 100)")
+
+midterm_total %>% 
+        subset(., .$score_type != "score") %>%
+        .$total %>%
+        summary
+
+
+midterm_total %>% 
+        mutate(mj = (student_id == 12220775))
+        #subset(., .$score_type == "score") %>%
+        ggplot(aes(x=total, fill = "white")) +
+        geom_histogram() +
+        theme_classic() +
+        theme(legend.position = "none") +
+        ylab("Number of students") +
+        xlab("Raw score | percent scroe") +
+        facet_wrap(~score_type, ncol = 1) +
+        MetBrewer::scale_fill_met_d("Lakota") 
+        
+
+        
+        
+
+midterm_total %>% 
+        mutate(mj = (student_id == 12220775)) %>%
+        #subset(., .$score_type == "score") %>%
+        ggplot(aes(x=total, fill = mj)) +
+        geom_histogram() +
+        theme_classic() +
+        theme(legend.position = "none") +
+        ylab("Number of students") +
+        xlab("Raw score | percent scroe") +
+        facet_wrap(~score_type, ncol = 1) +
+        MetBrewer::scale_fill_met_d("Lakota") 
+        
+midterm_total %>% 
+        mutate(mj = (student_id == 12220775)) %>%
+        subset(., .$score_type!= "score") %>%
+        .[order(.$total, decreasing = T),] %>%
+        data.frame %>%
+        mutate(rank = 1:28) %>%
+        mutate(percentile_from_1st  = rank/28*100) 
+
+        
+```
+
+
+# Boxplot of each problemset
+
+
+```{r}
+midterm_merged %>% 
+        ggplot(aes(x = problemset, y = score, fill = problemset)) +
+                       geom_boxplot() +
+        scale_fill_brewer(name = "Problem set",
+                          type = "qual", 
+                          palette = 3) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        xlab("Problem set") +
+        ylab("Score") +
+        facet_wrap(~score_type, scales = "free")
+
+
+```
+
+
+# Score data in histogram - by each problem set
+
+```{r}
+midterm_merged %>% 
+        subset(., .$score_type == "score") %>%
+        ggplot(aes(x = score, fill = problemset)) +
+        geom_histogram() +
+        MetBrewer::scale_fill_met_d(name = "Signac") +
+        facet_wrap(~problemset, scales = "free") +
+        #guide_legend(title = "Problem set") +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        ylab("Number of students") +
+        xlab("Range of raw score")
+
+
+midterm_merged %>% 
+        subset(., .$score_type == "score_perc") %>%
+        ggplot(aes(x = score, fill = problemset)) +
+        geom_histogram() +
+        MetBrewer::scale_fill_met_d(name = "Signac") +
+        facet_wrap(~problemset, scales = "free") +
+        #guide_legend(title = "Problem set") +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        ylab("Number of students") +
+        xlab("Range of % score")
+
+
+                       
+
+```
+
+# Score total - summary statistics
+
+```{r}
+
+midterm_merged %>% 
+        subset(., .$score_type == "score") %>% 
+        select(-c(full_score, student_id, department, major, year)) %>%
+        reactable(groupBy = c("problemset"),
+                  columns = list(
+                          score_type = colDef(aggregate = "frequency"),
+                          score = colDef(aggregate = "mean", format = colFormat(digits = 2))
+                  )) %>%
+        reactablefmtr::add_title("Interactive table of summary statistics raw score by each problemset")
+        
+
+
+midterm_merged %>% 
+        subset(., .$score_type != "score") %>% 
+        select(-c(full_score, student_id, department, major, year)) %>%
+        reactable(groupBy = c("problemset"),
+                  columns = list(
+                          score_type = colDef(aggregate = "frequency"),
+                          score = colDef(aggregate = "mean", format = colFormat(digits = 2))
+                  )) %>%
+        reactablefmtr::add_title("Interactive table of summary statistics of % score by each problemset")
+        
+
+
+```
+
+
+# Score total - boxplot and histogram
+
+```{r}
+
+midterm_total %>%
+        ggplot(aes(x = department, y = total, fill = department)) +
+        geom_boxplot() +
+        MetBrewer::scale_fill_met_d(name = "Signac") +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        xlab("By department") +
+        theme(axis.text.x = element_blank(),
+              legend.position = "none") +
+        facet_wrap(~score_type, scales = "free")+
+        ylab("Total score")
+
+
+midterm_total %>%
+        ggplot(aes(x = student_year, y = total, fill = student_year)) +
+        geom_boxplot() +
+        MetBrewer::scale_fill_met_d(name = "Signac") +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        theme(axis.text.x = element_blank(),
+              legend.position = "none") +
+        guides(fill = guide_legend()) +
+        xlab("By school admission year") +
+        facet_wrap(~score_type, scales = "free")+
+        ylab("Total score")
+
+
+```
+
+# For fun, a statistical test
+
+Is there a different between junior and senior?
+
+# Total score - boxplot by year
+
+```{r}
+
+midterm_total %>%
+        subset(., .$score_type == "score") %>% 
+        mutate(year = as.factor(year)) %>% 
+        ggplot(aes(y = total, x = year, fill = year)) +
+        geom_boxplot() +
+        #facet_wrap(~year, ncol = 1) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        ylab("Score") +
+        xlab("Year of study at Inha")
+        
+
+
+```
+
+# Total score - histogram by year
+
+```{r}
+
+midterm_total %>%
+        #subset(., .$score_type == "score") %>% 
+        mutate(year = as.factor(year)) %>%
+        ggplot(aes(x = total, fill = year)) +
+        geom_histogram(aes(fill = year), position = position_identity(), alpha = 0.5) +
+        scale_fill_brewer(name = "Year of study at Inha",
+                          type = "qual", 
+                          palette = 6) +
+        #facet_wrap(~year, ncol = 1) +
+        theme_classic(base_family = "serif",
+                      base_size = 13) +
+        theme(legend.position = "top") + 
+        facet_wrap(~score_type, ncol = 1, scales = "free") + 
+        xlab("Score") +
+        ylab("Number of students")
+
+
+
+
+```
+
+
+# *t*-tests
+
+t-test (unpaired, unequal variance)
+
+H<sub>0</sub> (null hypothesis): true difference in means is 0, i.e., there is no difference between junior and senior
+H<sub>a</sub> (alternative hypothesis): true difference in means is not equal to 0.
+
+
+
+```{r}
+
+raw_score_data <- midterm_total %>%
+        subset(., .$score_type == "score") %>% 
+        mutate(year = as.factor(year))
+
+t.test(subset(raw_score_data, raw_score_data$year == "4") %>% .$total,
+       subset(raw_score_data, raw_score_data$year == "3") %>% .$total,
+       paired = F, var.equal = F)
+
+
+
+
+perc_score_data <- midterm_total %>%
+        subset(., .$score_type != "score") %>% 
+        mutate(year = as.factor(year))
+
+t.test(subset(perc_score_data, perc_score_data$year == "4") %>% .$total,
+       subset(perc_score_data, perc_score_data$year == "3") %>% .$total,
+       paired = F, var.equal = F)
+
+
+
+        
+```
+
+**p**-value is 0.48. Therefore, we accect the null hypothesis (there is no significant difference between mean of junior and senior).
+
+
+Alternatively,
+
+```{r}
+
+raw_score_data %>%
+        lm(total ~ year, data = .) %>% 
+        summary
+
+
+perc_score_data %>%
+        lm(total ~ year, data = .) %>% 
+        summary
+
+
+```
+
+# LM on each problemset
+
+```{r}
+midterm_merged %>%
+        subset(., .$score_type=="score_perc") %>%
+        lm(data = ., score ~ problemset) %>%
+        summary %>%
+        .$coefficient %>%
+        round(3) %>%
+        format(digits = 3) %>%
+        data.frame(check.names = F) %>%
+        mutate(` ` = case_when(`Pr(>|t|)` %>%as.numeric < 0.001 ~ "***",
+                               `Pr(>|t|)` %>%as.numeric < 0.01 ~ "**",
+                               `Pr(>|t|)` %>%as.numeric < 0.05 ~ "*",
+                               .default = NA)) %>%
+        reactable(sortable = T, showPageSizeOptions = T)
+```
+# LM on raw score
+
+With categorical variables (department)
+
+```{r}
+
+raw_score_data %>%
+        lm(total ~ department, data = .) %>% 
+        summary %>%
+        .$coefficient %>%
+        data.frame(check.names = F) %>%
+        round(3) %>% 
+        format(digits = 3) %>%
+        mutate(row_temp = c("(Intercept)", "Dept. 2", "Dept. 3", "Dept. 4", "Dept. 5")) %>%
+        remove_rownames() %>%
+        column_to_rownames("row_temp") %>%
+        reactable
+
+```
+# LM on percent score
+
+```{r}
+
+perc_score_data %>%
+        lm(total ~ department, data = .) %>% 
+        summary %>%
+        .$coefficient %>%
+        data.frame(check.names = F) %>%
+        round(3) %>% 
+        format(digits = 3) %>%
+        mutate(row_temp = c("(Intercept)", "Dept. 2", "Dept. 3", "Dept. 4", "Dept. 5")) %>%
+        remove_rownames() %>%
+        column_to_rownames("row_temp") %>%
+        reactable
+
+
+
+```
+
+We are going to learn more about the linear model, at the later half of the semester!
+# Bibliography
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+        str_libraries |>
+                pacman::p_citation() |>
+                print(bibtex = FALSE) |>
+                capture.output() %>%
+                .[-1:-3] %>% .[. != ""] |>
+                stringr::str_squish() |>
+                stringr::str_replace("_", "") |>
+                cat()
+        cat("\n")
+}
+#===============================================================================
+```

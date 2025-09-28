@@ -1,20 +1,31 @@
 ---
 title: "COD_week1_2_MGK_BTE3207"
 author: "Minsik Kim"
-date: "2023-09-04"
+date: "2024-09-02"
 output:
-        rmdformats::downcute:
-        downcute_theme: "chaos"
-code_folding: show
-fig_width: 6
-fig_height: 6
-df_print: paged
-editor_options: 
-        chunk_output_type: inline
-markdown: 
-        wrap: 72
+  rmdformats::downcute:
+    downcute_theme: "chaos"
+  code_folding: show
+  fig_width: 6
+  fig_height: 6
+  df_print: paged
+  editor_options:
+    chunk_output_type: inline
+  markdown:
+    wrap: 72
 ---
-        
+
+<style>
+  /* Default light mode styles */
+  .reactable {
+    background-color: #ffffff !important; /* Light background */
+    color: #000000 !important;            /* Dark text */
+    border-color: #cccccc !important;     /* Light border */
+  }
+
+</style>
+
+
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', setup}
 #===============================================================================
 #BTC.LineZero.Header.1.1.0
@@ -28,16 +39,27 @@ markdown:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("tidyverse", "pacman", "yaml")
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/mnt/4T_samsung/Dropbox/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Users/minsikkim/Dropbox (Personal)/"))
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R_lib/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+
+str_libraries <- c("tidyverse", "pacman", "yaml", "reactable")
 
 
 YAML_header <-
         '---
 title: "BTE3207 week 1-2"
 author: "Minsik Kim"
-date: "2032.09.04"
+date: "2024.09.02"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -45,7 +67,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230904"
+seed <- "20240902"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -100,17 +122,17 @@ Here are some examples.
 ```{r}
 alpha <- 1 # this is data element
 
-alpha # if we call alpha, computer will tell you what is assaigned as alpha.
+alpha  # If we call alpha, the computer will display the value assigned to alpha.
 
 ```
 
 ## Vecetor
 
-To assign vector in R, we use `c()`, with comma `,` as separators. For example, 
+To assign vector in R, we use `c()`, with comma `,` as separators. For example:
 
 ```{r}
 
-beta <- c(1, 2) # this is vector
+beta <- c(1, 2) # this is a vector
 
 beta
 
@@ -118,7 +140,7 @@ beta
 
 
 ```{r}
-gamma <- c(alpha, beta) # it is still a vector
+gamma <- c(alpha, beta)  # This is also a vector
 
 gamma
 
@@ -134,7 +156,9 @@ delta
 
 ```
 
-*If you call* `beta` *in R, it will find data named as *`beta`. *Then, how do we assign characters (letters, categorical variable)?* **R recognizes character values with **`""`. For instance,
+
+
+*When you call* `beta` *in R, it will retrieve data associated with *`beta`. *So, how do we assign characters (letters or categorical variable)?* **R recognizes character values with **`""`. For instance:
 
 ```{r}
 
@@ -149,17 +173,17 @@ With quotation marks, the R will recognize inputs as a new character data, not t
 
 # Data frame
 
-Then, what should we do with larger data, such as excel spread sheets?
+So, what should we do with larger data sets, such as Excel spreadsheets?
 
-Vectors in R can be chucked together, **when their legnth is the same**.
+Vectors in R can be combined into a data frame, **as long as their lengths are the same.**
 
-This is called data frame in R, and it can be assigned using `data.frame()` function.
+This is called data frame in R, and it can be created using the `data.frame()` function.
 
 
 ```{r}
 
-epsilon <- data.frame(gamma, delta) # this is data frame
-# note that the length of both gamma and delta is the same.
+epsilon <- data.frame(gamma, delta)  # This is a data frame
+# Note that the lengths of both gamma and delta are the same.
 
 epsilon
 
@@ -168,9 +192,10 @@ epsilon
 
 ## Selecting variables (vectors) in data frame
 
-Data frame has columns, where each column is one variable (vectors)
+A data frame has columns, where each column represents one variable (vector).
 
-we use dollar sign to select one variable from data frame
+We use the dollar sign $ to select a specific variable from a data frame.
+
 
 ```{r}
 
@@ -181,9 +206,10 @@ epsilon$delta
 
 ```
 
-`epsilon$gamma` returns exact the same vector as just `gamma`, which was used for constructing epsilon.
+`epsilon$gamma` returns the exact same vector as just `gamma`, which was used for constructing epsilon.
 
-Then, how can we generate larger dataset to analyze something?
+Now, how can we generate a larger dataset for analysis?
+
 
 ## Data frame example
 
@@ -191,160 +217,218 @@ We can make data by adding multiple data elements to vectors, and we can bind th
 
 
 ```{r}
-subject <- c("Joe", "Trump", "Obama", "George") #assigning multiple data as a vector
+
+subject <- c("Joe", "Trump", "Obama", "George")  # Assigning multiple data elements as a vector
 height <- c(183, 190, 187, 182)
 IsTall <- c("short", "tall", "tall", "short")
 
-example_dataframe <- data.frame(subject, height, IsTall) #binding 3 vectors as one data frame
+example_dataframe <- data.frame(subject, height, IsTall)  # Combining 3 vectors into one data frame
 
-example_dataframe #loading the example_data frame
-
-```
-
-## Loading data
-
-However, we are not going to type all the data whenever they are needed. To save our previous time, we will directly load the data frame from our computer (most commonly `.csv`, we can also import `.xlsx`) using `read.csv()` function.
-
-Here is the example of a SBP (systolic blood pressure) data from https://nhiss.nhis.or.kr/bd/ab/bdabf003cv.do.
-
-```{r}
-
-dataset_sbp <- read.csv(file = "/Users/minsikkim/Dropbox (Personal)/Inha/5_Lectures/Advanced biostatistics/datasets/sbp_dataset/sbp_dataset_korea_2013-2014.csv") 
+example_dataframe  # Displaying the example_data frame
 
 ```
 
-The data is loaded as below. However, as it contains 1M lines of data, calling the data will make this document too long. Here, we can use `head()` or `tail()` functions to see only 10-first or 10-last dataset, respectively.
 
-## head() and tail() functions {.tabset}
 
-### head() 
+## Loading Data
+
+However, we won’t be typing all the data manually every time it’s needed. To save time, we will directly load data frames from our computer (most commonly `.csv`, but we can also import `.xlsx`) using the `read.csv()` function.
+
+Here is an example using systolic blood pressure (SBP) data from [NHISS](https://nhiss.nhis.or.kr/bd/ab/bdabf003cv.do).
 
 ```{r}
 
+dataset_sbp <- read.csv(file = "Inha/5_Lectures/2024/Advanced biostatistics/scripts/BTE3207_Advanced_Biostatistics/dataset/sbp_dataset_korea_2013-2014.csv")
+
+
+dataset_sbp %>%
+        reactable::reactable(sortable = T)
+
+```
+
+Here, the `file = "Inha/5_Lectures/Advanced_biostatistics/datasets/sbp_dataset/sbp_dataset_korea_2013-2014.csv"` need to be the path that you downloaded the file.
+
+When working with data in R, it's often necessary to load data from your computer instead of typing everything manually. The most common file formats for data are `.csv` (Comma-Separated Values) and `.xlsx` (Excel files). 
+
+To load a `.csv` file, we use the `read.csv()` function. However, to load the file correctly, you need to know the **file path**, which tells R where to find the file on your computer.
+
+## Meanwhile, actually you can download the files at your current working directory with a valid URL for the file as well. 
+
+```{r}
+url_link <- "https://raw.githubusercontent.com/minsiksudo/BTE3207_Advanced_Biostatistics/refs/heads/main/dataset/sbp_dataset_korea_2013-2014.csv"
+
+download.file(url = url_link, 
+              destfile = "sbp_dataset_korea_2013-2014.csv") # the name that you want to store the linked file at your computer. 
+
+list.files() # This shows all the files in your current working directory
+
+dataset_sbp <- read.csv("sbp_dataset_korea_2013-2014.csv") # as the file is in your current folder, you don't need to specify the path.
+
+```
+
+### Understanding File Paths
+
+A file path is like a map that tells your computer where to find a file. There are two types of file paths:
+
+1. **Absolute Path**: This is the full path from the root directory (e.g., `C:/` on Windows or `/` on Mac/Linux) to the file.
+2. **Relative Path**: This is the path relative to your current working directory in R.
+
+### Navigating File Paths in R
+
+- **Mac/Linux Users**: File paths use forward slashes `/` to separate directories.
+  - Example: `/Users/username/Documents/data.csv`
+- **Windows Users**: File paths use backslashes `\`, but in the unicode of Korean Windows operating system, it is translated KRW sign, therefore, you should use `\\` (double backslashes).
+  - Example: `C:/Users/username/Documents/data.csv` --> change to `C:\\Users\\username\\Documents\\data.csv`
+
+### Using the Tab Key to Navigate
+
+RStudio provides a convenient feature to help you navigate file paths. When you start typing a file path within quotes (e.g., `"`), you can press the `Tab` key to see a list of files and folders in the current directory. This feature is very helpful for avoiding mistakes in typing paths.
+
+### Setting the Working Directory
+
+Before loading a file, it’s useful to set the working directory to the folder where your data is stored. This way, you can use relative paths instead of absolute paths.
+
+```{r}
+#setwd("/Users/username/Documents")  # For Mac/Linux - this is example file path
+#setwd("C:/Users/username/Documents")  # For Windows - this is example file path
+```
+
+You can check your current working directory by using:
+
+```{r}
+getwd()
+```
+
+### Example of Loading a CSV File
+
+Here’s how you can load a CSV file into R:
+
+```{r}
+# Example for Mac/Linux
+#dataset_sbp <- read.csv(file = "/Users/username/Documents/sbp_dataset.csv")
+
+# Example for Windows
+#dataset_sbp <- read.csv(file = "C:/Users/username/Documents/sbp_dataset.csv")
+```
+
+### Using the `file.choose()` Function
+
+If you're unsure about the file path, R provides a `file.choose()` function that opens a file dialog to help you select the file interactively:
+
+Try using the function after removing the `number sign (#)` of the below code
+
+```{r}
+#dataset_sbp <- read.csv(file = file.choose())
+
+```
+
+This method is platform-independent and can be a helpful alternative if you're having trouble with file paths.
+
+The data is loaded as shown below. However, since it contains 1 million lines of data, displaying the entire dataset would make this document too long. Instead, we can use the `head()` or `tail()` functions to view only the first 10 or last 10 rows, respectively.
+
+## head() and tail() Functions {.tabset}
+
+### head()
+
+```{r}
 head(dataset_sbp)
-
 ```
 
 ### tail()
 
 ```{r}
-
 tail(dataset_sbp)
-
 ```
 
-### full dataset
+### Full Dataset
 
 ```{r}
-
 dataset_sbp
-
 ```
 
 ### {-}
 
-This shows (subsets of) gender, age group, SBP, DBP, FBS, DIS, and BMI data of 1,000,000 subjects. 
+This shows (subsets of) gender, age group, SBP, DBP, FBS, DIS, and BMI data for 1,000,000 subjects.
 
-For now, we will use dollar sign to select one variable from dataframe. Again, I will use head(function to check starting 10 data at this time)
-
+For now, we will use the dollar sign to select one variable from the data frame. Again, I will use the `head()` function to check the first 10 rows of data this time.
 
 ```{r}
-
 head(dataset_sbp$SBP)
-
 ```
 
-Such a long data!
+That’s a lot of data!
 
-# Basic R functions for statistics
+# Basic R Functions for Statistics
 
-Now, let's use computer to calculate summary statistics of this large dataset.
+Now, let's use R to calculate summary statistics for this large dataset.
 
+## Mean Calculation
 
-## Mean calculation
-
-Function for calculating mean is `mean()`
+The function for calculating the mean is `mean()`.
 
 ```{r}
 mean(dataset_sbp$SBP)
 ```
 
-This is the mean value of all the SBP data (1,000,000).
+This is the mean value of all the SBP data (1,000,000 rows).
 
-## SD calculation
+## SD Calculation
 
-Function for calculating standard deviation is `sd()`
+The function for calculating the standard deviation is `sd()`.
 
 ```{r}
-
 sd(dataset_sbp$SBP)
-
 ```
 
-This is the SD.
+This is the standard deviation.
 
 ## Median
 
-function for calculating median: median()
-
-Median can be calculated by using `median()`
-
+The function for calculating the median is `median()`.
 
 ```{r}
-
 median(dataset_sbp$SBP)
-
 ```
 
+## Function for Calculating Quantiles: `quantile()`
 
-## Function for calculating quantile: qunatile()
-
-`quantile()` function has two functions. Without assigning any percentile value of our interest, it will list all the quantiles (0, 25%, 50%, 75% and 100% percentiles) at once.
+The `quantile()` function can be used to calculate multiple percentiles at once. Without specifying any percentile, it will return the 0%, 25%, 50%, 75%, and 100% percentiles.
 
 ```{r}
-
 quantile(dataset_sbp$SBP)
-
 ```
 
-As the output of `quantile()` shows multiple data element, the output is a **vector**. Kindly, this output also has names as well. To check what the data has output, we can test `str()`. 
+Since the output of `quantile()` contains multiple data elements, the result is a **vector**. Conveniently, this output also includes names. To check the structure of this output, we can use the `str()` function.
 
 ```{r}
-
 str(quantile(dataset_sbp$SBP))
-
 ```
 
-The str() says it is `named numeric variable`.
+The `str()` function indicates that it is a `named numeric variable`.
 
-## quantile() - continued
+## Quantile() - Continued
 
-However, what should we do if we are curious about values at a specific percentile? In that case we need to give more information to functions.
+But what if we want to find the value at a specific percentile? In that case, we need to provide more information to the function.
 
-These information handed over to function are called **arguments**.
+These pieces of information are called **arguments**.
 
-As functions in R can have multiple inputs, we separate them with commas (`,`). 
+Since functions in R can accept multiple inputs, we separate them with commas (`,`).
 
-for example, 
-
-10% percentile of the SBP dataset can be calculated using
+For example, to calculate the 10th percentile of the SBP dataset:
 
 ```{r}
-
-quantile(x = dataset_sbp$SBP, 0.1)
-
+quantile(x = dataset_sbp$SBP, probs = 0.1)
 ```
 
-# Use question mark to see what function is doing
+# Using the Question Mark to Explore a Function
 
-As thous functions were constructed by multiple , and there are lots of `packages` that can be newly installed to employ new functions in R. Developers listed all the details and instructions when they made new functions, and they can be reviewed by adding `questionmark` to a function.
+As these functions can have multiple arguments, and there are many `packages` that can be installed to add new functions to R, developers provide detailed instructions. You can access this information by adding a `?` before a function name.
 
 ```{r}
-?quantile(data)
+?quantile
 ```
 
-
-For some popular functions, details for `arguments` are usullally embeded on pop-ups. Use `tab` button to see what function can do.
+For some popular functions, details about the `arguments` will usually appear in pop-ups. You can use the `Tab` button to see what the function can do.
 
 
 # Bibliography
